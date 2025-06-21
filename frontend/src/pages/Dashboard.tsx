@@ -20,7 +20,6 @@ import {
   Edit,
   Users,
   Settings,
-  Leaf,
   Waypoints,
 } from "lucide-react";
 import { PersonaSidebar } from "@/components/PersonaSidebar";
@@ -67,7 +66,7 @@ interface Session {
   status: "Completed" | "In Progress" | "In P.";
 }
 
-const UserInterface = () => {
+const Dashboard = () => {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCustomizePersonaOpen, setIsCustomizePersonaOpen] = useState(false);
@@ -116,7 +115,7 @@ const UserInterface = () => {
       client: "Epsilon LLC",
       avatars: ["👤", "👩", "👨", "🧑"],
       startDate: "3/17/2021",
-      status: "In P.",
+      status: "In Progress",
     },
   ];
 
@@ -152,26 +151,6 @@ const UserInterface = () => {
         return [...prev, persona];
       }
     });
-  };
-
-  const scrapeAndAddPersona = async (username: string) => {
-    if (!username.trim()) return false;
-    try {
-      // Mock implementation - replace with actual API call
-      const newPersona: Persona = {
-        id: `instagram-${username}`,
-        name: username,
-        description: `Persona created from @${username}`,
-        avatar: "📸",
-      };
-      if (!customPersonas.find((p) => p.id === newPersona.id)) {
-        setCustomPersonas((prev) => [...prev, newPersona]);
-      }
-      return true;
-    } catch (error) {
-      console.error("Scraping error:", error);
-      return false;
-    }
   };
 
   const filteredSessions = sessions.filter((session) => {
@@ -428,7 +407,6 @@ const UserInterface = () => {
         personas={customPersonas}
         onAddPersona={handlePersonaAdd}
         onDeletePersona={handlePersonaDelete}
-        onScrapePersona={scrapeAndAddPersona}
       />
 
       {/* Customize Persona Modal */}
@@ -442,4 +420,4 @@ const UserInterface = () => {
   );
 };
 
-export default UserInterface; 
+export default Dashboard; 
