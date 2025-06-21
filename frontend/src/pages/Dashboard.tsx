@@ -162,12 +162,12 @@ const Dashboard = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background text-foreground">
         {/* Header */}
-        <header className="bg-slate-800 text-white px-6 py-4">
+        <header className="bg-card text-card-foreground px-6 py-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Waypoints className="h-8 w-8 text-white" />
+              <Waypoints className="h-8 w-8 text-primary" />
               <h1 className="text-xl font-semibold">MeshAI</h1>
             </div>
             <div className="flex items-center gap-4">
@@ -175,17 +175,17 @@ const Dashboard = () => {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsSidebarOpen(true)}
-                className="text-white hover:bg-slate-700"
+                className="text-foreground hover:bg-muted"
               >
                 <Settings className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-slate-700">
+              <Button variant="ghost" size="icon" className="text-foreground hover:bg-muted">
                 <Bell className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-slate-700">
+              <Button variant="ghost" size="icon" className="text-foreground hover:bg-muted">
                 <HelpCircle className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-slate-700">
+              <Button variant="ghost" size="icon" className="text-foreground hover:bg-muted">
                 <User className="h-5 w-5" />
               </Button>
             </div>
@@ -195,11 +195,11 @@ const Dashboard = () => {
         <div className="p-6 max-w-7xl mx-auto">
           {/* Top Action Bar */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <Button 
-              onClick={() => navigate('/focus-group')}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 text-lg"
+            <Button
+              onClick={() => navigate("/focus-group")}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 text-lg"
             >
-              Start New Focus Group
+              + New Session
             </Button>
             <Button 
               onClick={() => setIsCustomizePersonaOpen(true)}
