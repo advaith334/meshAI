@@ -26,34 +26,9 @@ import { PersonaSidebar } from "@/components/PersonaSidebar";
 import { CustomizePersona } from "@/components/CustomizePersona";
 
 interface Persona {
-  id: string;
-  name: string;
-  description: string;
-  avatar: string;
-}
-
-interface CustomPersona {
-  id: string;
   name: string;
   avatar: string;
-  persona: string;
-  industry: string;
   role: string;
-  ageGroup: string;
-  gender: string;
-  ethnicity: string;
-  religion: string;
-  education: string;
-  income: string;
-  location: string;
-  riskTolerance: number;
-  techAdoption: number;
-  emotionalSensitivity: number;
-  opennessToIdeas: number;
-  motivations: string[];
-  customAttributes: { [key: string]: string };
-  behavioralTraits: string[];
-  engagementScore: number;
   description: string;
 }
 
@@ -71,7 +46,6 @@ const Dashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCustomizePersonaOpen, setIsCustomizePersonaOpen] = useState(false);
   const [customPersonas, setCustomPersonas] = useState<Persona[]>([]);
-  const [detailedPersonas, setDetailedPersonas] = useState<CustomPersona[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
@@ -126,35 +100,8 @@ const Dashboard = () => {
     { name: "Usability Assessment", trend: "↗️" },
   ];
 
-  const handlePersonaAdd = (newPersona: Omit<Persona, "id">) => {
-    const persona: Persona = {
-      ...newPersona,
-      id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    };
-    setCustomPersonas((prev) => [...prev, persona]);
-  };
-
-  const handlePersonaDelete = (id: string) => {
-    setCustomPersonas((prev) => prev.filter((p) => p.id !== id));
-  };
-
-  const handleDetailedPersonaSave = (persona: CustomPersona) => {
-    setDetailedPersonas((prev) => {
-      const existingIndex = prev.findIndex(p => p.id === persona.id);
-      if (existingIndex >= 0) {
-        // Update existing persona
-        const updated = [...prev];
-        updated[existingIndex] = persona;
-        return updated;
-      } else {
-        // Add new persona
-        return [...prev, persona];
-      }
-    });
-  };
-
-  const handleDetailedPersonaDelete = (personaId: string) => {
-    setDetailedPersonas((prev) => prev.filter((p) => p.id !== personaId));
+  const handlePersonaAdd = (newPersona: Persona) => {
+    setCustomPersonas((prev) => [...prev, newPersona]);
   };
 
   const filteredSessions = sessions.filter((session) => {
@@ -318,17 +265,13 @@ const Dashboard = () => {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         personas={customPersonas}
-        onAddPersona={handlePersonaAdd}
-        onDeletePersona={handlePersonaDelete}
       />
 
       {/* Customize Persona Modal */}
       <CustomizePersona
         isOpen={isCustomizePersonaOpen}
         onClose={() => setIsCustomizePersonaOpen(false)}
-        onSave={handleDetailedPersonaSave}
-        onDelete={handleDetailedPersonaDelete}
-        existingPersonas={detailedPersonas}
+        onSave={handlePersonaAdd}
       />
     </>
   );
