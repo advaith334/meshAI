@@ -1,5 +1,4 @@
 Flask
-instaloader
 python-dotenv
 flask-cors
 google-generativeai 
