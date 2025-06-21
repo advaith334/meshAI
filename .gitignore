@@ -1,5 +1,8 @@
 .env
 .venv
+venv/
+env/
+ENV/
 __pycache__
 *.pyc
 *.pyo
@@ -8,3 +11,25 @@ __pycache__
 *.pyz
 *.pywz
 node_modules
+pnpm-lock.yaml
+
+# Python virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+.ENV/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
