@@ -9,5 +9,4 @@ pydantic
 python-multipart
 PyYAML
 requests
-pytest
-pytest-flask 
+pytest 

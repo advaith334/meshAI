@@ -1,19 +1,23 @@
 import os
 import yaml
+import logging
 from typing import Dict, List, Any, Optional
-from crewai import Agent, Crew, Task, Process
-from langchain_google_genai import ChatGoogleGenerativeAI
+from crewai import Agent, Crew, Task, Process, LLM 
 from datetime import datetime
 import uuid
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 class CrewManager:
     """Manages CrewAI agents and tasks for MeshAI backend"""
     
     def __init__(self, gemini_api_key: str):
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-pro",
+        self.llm = LLM(
+            model="gemini/gemini-2.5-flash",
             google_api_key=gemini_api_key,
-            temperature=0.7
+            temperature=0.7,
+            max_tokens=1000
         )
         
         # Load configurations
@@ -112,6 +116,7 @@ class CrewManager:
             try:
                 result = crew.kickoff()
                 response_text = str(result)
+                logger.info(f"CrewAI Response for {persona_id}: {response_text}")
                 sentiment, score = self._analyze_sentiment(response_text)
                 
                 # Get persona info from agents config
@@ -178,6 +183,7 @@ class CrewManager:
             try:
                 result = crew.kickoff()
                 response_text = str(result)
+                logger.info(f"CrewAI Group Discussion Response for {persona_id}: {response_text}")
                 sentiment, score = self._analyze_sentiment(response_text)
                 
                 persona_config = self.agents_config[agent_name]
@@ -236,6 +242,7 @@ class CrewManager:
             try:
                 result = crew.kickoff()
                 response_text = str(result)
+                logger.info(f"CrewAI Focus Group Initial Reaction for {persona_id}: {response_text}")
                 sentiment, score = self._analyze_sentiment(response_text)
                 
                 persona_config = self.agents_config[agent_name]
@@ -288,6 +295,7 @@ class CrewManager:
                 try:
                     result = crew.kickoff()
                     response_text = str(result)
+                    logger.info(f"CrewAI Focus Group Round {round_num} Response for {persona_id}: {response_text}")
                     sentiment, score = self._analyze_sentiment(response_text)
                     
                     persona_config = self.agents_config[agent_name]
@@ -351,6 +359,7 @@ class CrewManager:
                 try:
                     summary_result = summary_crew.kickoff()
                     final_summary = str(summary_result)
+                    logger.info(f"CrewAI Focus Group Summary: {final_summary}")
                 except Exception as e:
                     print(f"Error creating summary: {e}")
                     final_summary = "Summary generation encountered an error."

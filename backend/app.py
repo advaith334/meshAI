@@ -1,4 +1,5 @@
 import os
+import logging
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -9,12 +10,27 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+# Configure logging for the application
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()  # This ensures logs go to console/terminal
+    ]
+)
+
+# Set Flask's logger to INFO level as well
+app.logger.setLevel(logging.INFO)
+
 # Initialize CrewManager
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 if not gemini_api_key:
     raise ValueError("GEMINI_API_KEY environment variable is required")
 
 crew_manager = CrewManager(gemini_api_key)
+
+# Test log to confirm logging is working
+app.logger.info("MeshAI Backend started successfully - logging is configured!")
 
 @app.route("/")
 def index():
@@ -42,6 +58,8 @@ def simple_interaction():
         
         reactions = crew_manager.run_simple_interaction(question, selected_personas)
         
+        app.logger.info(f"Reactions: {reactions}")
+        
         return jsonify({
             "question": question,
             "reactions": reactions,
@@ -67,6 +85,8 @@ def group_discussion():
             question, selected_personas, initial_reactions
         )
         
+        app.logger.info(f"Discussion Messages: {discussion_messages}")
+        
         return jsonify({
             "question": question,
             "discussion_messages": discussion_messages,
@@ -81,6 +101,7 @@ def focus_group_simulation():
     """Handle focus group simulation"""
     try:
         data = request.json
+        app.logger.info(f"Focus Group Data: {data}")
         campaign_description = data.get("campaign_description", "")
         selected_personas = data.get("personas", [])
         session_goals = data.get("goals", [])
@@ -91,6 +112,8 @@ def focus_group_simulation():
         result = crew_manager.run_focus_group_simulation(
             campaign_description, selected_personas, session_goals
         )
+        
+        app.logger.info(f"Focus Group Result: {result}")
         
         return jsonify(result)
         
@@ -115,6 +138,8 @@ def create_custom_persona():
             "motivations": data.get("motivations", []),
             "traits": data.get("behavioralTraits", [])
         }
+        
+        app.logger.info(f"Custom Persona Created: {persona_data}")
         
         return jsonify({
             "success": True,
