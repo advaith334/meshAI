@@ -31,17 +31,21 @@ import {
   ThumbsUp,
   Send,
 } from "lucide-react";
+import { apiClient } from "@/lib/api";
 
 interface Persona {
   id: string;
   name: string;
   avatar: string;
-  role: string;
-  sentiment: "positive" | "neutral" | "negative";
-  npsScore: number;
-  csatScore: number;
-  keyPoints: string[];
-  questions: string[];
+  description: string;
+  traits: string[];
+  // Display properties for focus group
+  role?: string;
+  sentiment?: "positive" | "neutral" | "negative";
+  npsScore?: number;
+  csatScore?: number;
+  keyPoints?: string[];
+  questions?: string[];
 }
 
 interface Message {
@@ -82,77 +86,9 @@ const FocusGroup = () => {
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [sessionDuration, setSessionDuration] = useState(0);
   const [newGoal, setNewGoal] = useState('');
+  const [availablePersonas, setAvailablePersonas] = useState<Persona[]>([]);
+  const [isLoadingPersonas, setIsLoadingPersonas] = useState(true);
   const chatEndRef = useRef<HTMLDivElement>(null);
-
-  // Mock personas available for selection
-  const availablePersonas: Persona[] = [
-    {
-      id: '1',
-      name: 'Sarah Marketing',
-      avatar: '👩‍💼',
-      role: 'Marketing Manager',
-      sentiment: 'positive',
-      npsScore: 8,
-      csatScore: 4.2,
-      keyPoints: ['Great user experience', 'Pricing concerns', 'Feature requests'],
-      questions: ['What about mobile optimization?', 'Can we integrate with existing tools?']
-    },
-    {
-      id: '2',
-      name: 'Tech Mike',
-      avatar: '👨‍💻',
-      role: 'Software Engineer',
-      sentiment: 'neutral',
-      npsScore: 6,
-      csatScore: 3.8,
-      keyPoints: ['Technical feasibility', 'Security concerns', 'Performance issues'],
-      questions: ['What about API limitations?', 'How scalable is this solution?']
-    },
-    {
-      id: '3',
-      name: 'Customer Lisa',
-      avatar: '👩‍🔬',
-      role: 'Product Manager',
-      sentiment: 'positive',
-      npsScore: 9,
-      csatScore: 4.5,
-      keyPoints: ['Innovation potential', 'Market opportunity', 'User feedback'],
-      questions: ['How does this compare to competitors?', 'What\'s the roadmap?']
-    },
-    {
-      id: '4',
-      name: 'Sales Tom',
-      avatar: '👨‍💼',
-      role: 'Sales Executive',
-      sentiment: 'negative',
-      npsScore: 4,
-      csatScore: 2.8,
-      keyPoints: ['Pricing challenges', 'Competition concerns', 'Client hesitation'],
-      questions: ['How do we justify the cost?', 'What about training requirements?']
-    },
-    {
-      id: '5',
-      name: 'Data Anna',
-      avatar: '👩‍🎓',
-      role: 'Data Analyst',
-      sentiment: 'neutral',
-      npsScore: 7,
-      csatScore: 3.9,
-      keyPoints: ['Data accuracy', 'Reporting capabilities', 'Integration needs'],
-      questions: ['What metrics can we track?', 'How reliable is the data?']
-    },
-    {
-      id: '6',
-      name: 'UX Designer',
-      avatar: '🎨',
-      role: 'UX Designer',
-      sentiment: 'positive',
-      npsScore: 8,
-      csatScore: 4.3,
-      keyPoints: ['User interface', 'Accessibility', 'Design consistency'],
-      questions: ['Is it mobile-friendly?', 'What about color contrast?']
-    }
-  ];
 
   // Timer effect
   useEffect(() => {
@@ -169,6 +105,39 @@ const FocusGroup = () => {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [sessionData.messages]);
+
+  // Load personas from API
+  useEffect(() => {
+    const loadPersonas = async () => {
+      try {
+        const response = await apiClient.getPersonas();
+        if (response.error) {
+          console.error('Failed to load personas:', response.error);
+          // Fallback to empty array if API fails
+          setAvailablePersonas([]);
+        } else if (response.data) {
+          // Transform API personas to include focus group display properties
+          const transformedPersonas: Persona[] = response.data.map((persona, index) => ({
+            ...persona,
+            role: persona.description,
+            sentiment: (["positive", "neutral", "negative"][index % 3]) as "positive" | "neutral" | "negative",
+            npsScore: Math.floor(Math.random() * 6) + 4, // 4-9
+            csatScore: Math.random() * 2 + 3, // 3-5
+            keyPoints: persona.traits.slice(0, 3),
+            questions: [`What about ${persona.traits[0]}?`, `How does this affect ${persona.traits[1] || 'outcomes'}?`]
+          }));
+          setAvailablePersonas(transformedPersonas);
+        }
+      } catch (error) {
+        console.error('Network error loading personas:', error);
+        setAvailablePersonas([]);
+      } finally {
+        setIsLoadingPersonas(false);
+      }
+    };
+
+    loadPersonas();
+  }, []);
 
   // Mock conversation generator
   const generateMockConversation = () => {
@@ -264,7 +233,7 @@ const FocusGroup = () => {
     });
   };
 
-  const startSession = () => {
+  const startSession = async () => {
     if (sessionData.name && sessionData.purpose && sessionData.personas.length === 5) {
       setSessionData(prev => ({
         ...prev,
@@ -272,7 +241,45 @@ const FocusGroup = () => {
       }));
       setCurrentStep('chat');
       setIsSessionActive(true);
-      generateMockConversation();
+      
+      try {
+        // Use real API for focus group simulation
+        const personaIds = sessionData.personas.map(p => p.id);
+        const response = await apiClient.focusGroupSimulation(
+          sessionData.purpose, 
+          personaIds, 
+          sessionData.goals
+        );
+        
+        if (response.error) {
+          console.error('Focus group API Error:', response.error);
+          // Fallback to mock conversation
+          generateMockConversation();
+        } else if (response.data) {
+          // Convert API response to frontend format
+          const messages: Message[] = response.data.discussion_messages.map(msg => ({
+            id: msg.id,
+            personaId: msg.persona_id,
+            personaName: msg.persona_name,
+            avatar: msg.avatar,
+            content: msg.content,
+            timestamp: new Date(msg.timestamp),
+            sentiment: msg.sentiment as "positive" | "neutral" | "negative"
+          }));
+          
+          setSessionData(prev => ({
+            ...prev,
+            messages,
+            overallNPS: response.data?.final_summary?.overall_sentiment * 2 || 6.4,
+            overallCSAT: (response.data?.final_summary?.overall_sentiment + 5) / 2 || 3.7,
+            avgSentiment: response.data?.final_summary?.overall_sentiment || 0.6
+          }));
+        }
+      } catch (error) {
+        console.error('Focus group network error:', error);
+        // Fallback to mock conversation
+        generateMockConversation();
+      }
     }
   };
 

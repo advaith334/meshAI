@@ -12,6 +12,7 @@ import {
   Settings,
 } from "lucide-react";
 import { PersonaSidebar } from "@/components/PersonaSidebar";
+import { apiClient, PersonaReaction as ApiPersonaReaction } from "@/lib/api";
 
 interface Persona {
   id: string;
@@ -147,24 +148,84 @@ const Index = () => {
     if (!question.trim() || selectedPersonas.length === 0) return;
     
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    const reactions = generateMockReactions(selectedPersonas);
-    setInitialReactions(reactions);
-    setCurrentView('main');
-    setIsLoading(false);
+    try {
+      const response = await apiClient.simpleInteraction(question, selectedPersonas);
+      
+      if (response.error) {
+        console.error('API Error:', response.error);
+        // Fallback to mock data if API fails
+        const reactions = generateMockReactions(selectedPersonas);
+        setInitialReactions(reactions);
+      } else if (response.data) {
+        // Convert API response to frontend format
+        const reactions: PersonaReaction[] = response.data.reactions.map((apiReaction: ApiPersonaReaction) => ({
+          name: apiReaction.name,
+          sentiment: apiReaction.sentiment,
+          reaction: apiReaction.reaction,
+          avatar: apiReaction.avatar
+        }));
+        setInitialReactions(reactions);
+      }
+      
+      setCurrentView('main');
+    } catch (error) {
+      console.error('Network error:', error);
+      // Fallback to mock data on network error
+      const reactions = generateMockReactions(selectedPersonas);
+      setInitialReactions(reactions);
+      setCurrentView('main');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRunInteraction = async () => {
     setIsLoading(true);
-    // Simulate interaction processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
     
-    const updated = generateUpdatedReactions(initialReactions);
-    setUpdatedReactions(updated);
-    setCurrentView('results');
-    setIsLoading(false);
+    try {
+      // Convert frontend reactions to API format
+      const apiReactions: ApiPersonaReaction[] = selectedPersonas.map((personaId, index) => {
+        const reaction = initialReactions[index];
+        return {
+          persona_id: personaId,
+          name: reaction.name,
+          avatar: reaction.avatar,
+          reaction: reaction.reaction,
+          sentiment: reaction.sentiment,
+          sentiment_score: reaction.sentiment === 'positive' ? 2 : reaction.sentiment === 'negative' ? -2 : 0
+        };
+      });
+      
+      const response = await apiClient.groupDiscussion(question, selectedPersonas, apiReactions);
+      
+      if (response.error) {
+        console.error('Group discussion API Error:', response.error);
+        // Fallback to mock data if API fails
+        const updated = generateUpdatedReactions(initialReactions);
+        setUpdatedReactions(updated);
+      } else if (response.data) {
+        // Process group discussion results to show updated reactions
+        const lastMessages = response.data.discussion_messages.slice(-selectedPersonas.length);
+        const updated: PersonaReaction[] = lastMessages.map(msg => ({
+          name: msg.persona_name,
+          sentiment: msg.sentiment,
+          reaction: msg.content,
+          avatar: msg.avatar
+        }));
+        setUpdatedReactions(updated);
+      }
+      
+      setCurrentView('results');
+    } catch (error) {
+      console.error('Group discussion network error:', error);
+      // Fallback to mock data on network error
+      const updated = generateUpdatedReactions(initialReactions);
+      setUpdatedReactions(updated);
+      setCurrentView('results');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getSentimentColor = (sentiment: string) => {

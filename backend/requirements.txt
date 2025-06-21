@@ -1,4 +1,11 @@
 Flask
 python-dotenv
 flask-cors
-google-generativeai 
+google-generativeai
+crewai
+langchain-google-genai
+pillow
+pydantic
+python-multipart
+PyYAML
+requests 
