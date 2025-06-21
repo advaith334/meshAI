@@ -153,6 +153,10 @@ const Dashboard = () => {
     });
   };
 
+  const handleDetailedPersonaDelete = (personaId: string) => {
+    setDetailedPersonas((prev) => prev.filter((p) => p.id !== personaId));
+  };
+
   const filteredSessions = sessions.filter((session) => {
     const matchesSearch = session.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          session.client.toLowerCase().includes(searchQuery.toLowerCase());
@@ -203,67 +207,17 @@ const Dashboard = () => {
             </Button>
             <Button 
               onClick={() => setIsCustomizePersonaOpen(true)}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 text-lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg"
             >
               Create Personas
             </Button>
             <Select>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Import CSV" />
-              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="csv">Import CSV</SelectItem>
                 <SelectItem value="excel">Import Excel</SelectItem>
                 <SelectItem value="json">Import JSON</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <h3 className="text-sm font-medium text-gray-600 mb-2">Sessions</h3>
-                  <p className="text-3xl font-bold">12</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <h3 className="text-sm font-medium text-gray-600 mb-2">Average Sentiment</h3>
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-16 h-16 rounded-full border-4 border-blue-500 flex items-center justify-center">
-                      <span className="text-lg font-bold">85%</span>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2">85%</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <h3 className="text-sm font-medium text-gray-600 mb-2">Completion Rate</h3>
-                  <p className="text-3xl font-bold">92%</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <h3 className="text-sm font-medium text-gray-600 mb-2">NPS</h3>
-                  <div className="flex items-center justify-center">
-                    <p className="text-3xl font-bold">72</p>
-                    <span className="ml-2 text-blue-500">📈</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Session Overview */}
@@ -306,7 +260,6 @@ const Dashboard = () => {
                       <th className="text-left py-3 px-2 font-medium text-gray-600">Avatars</th>
                       <th className="text-left py-3 px-2 font-medium text-gray-600">Start Date</th>
                       <th className="text-left py-3 px-2 font-medium text-gray-600">Status</th>
-                      <th className="text-left py-3 px-2 font-medium text-gray-600">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -350,11 +303,6 @@ const Dashboard = () => {
                             {session.status}
                           </Badge>
                         </td>
-                        <td className="py-4 px-2">
-                          <Button variant="ghost" size="icon">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -362,41 +310,6 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
-
-          {/* Active Sessions */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl">Active Sessions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {activeSessionsData.slice(0, 2).map((session, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="font-medium">{session.name}</span>
-                      <span className="text-2xl">{session.trend}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl">Active Sessions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {activeSessionsData.slice(2, 4).map((session, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="font-medium">{session.name}</span>
-                      <span className="text-2xl">{session.trend}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </div>
 
@@ -414,6 +327,7 @@ const Dashboard = () => {
         isOpen={isCustomizePersonaOpen}
         onClose={() => setIsCustomizePersonaOpen(false)}
         onSave={handleDetailedPersonaSave}
+        onDelete={handleDetailedPersonaDelete}
         existingPersonas={detailedPersonas}
       />
     </>
