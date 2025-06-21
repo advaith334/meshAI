@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { X, Plus, User } from "lucide-react";
+import { X, Plus, User, Instagram } from "lucide-react";
 
 interface Persona {
   id: string;
@@ -17,28 +17,48 @@ interface PersonaSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   personas: Persona[];
-  onPersonaAdd: (persona: Omit<Persona, 'id'>) => void;
-  onPersonaDelete: (id: string) => void;
+  onAddPersona: (persona: Omit<Persona, 'id'>) => void;
+  onDeletePersona: (id: string) => void;
+  onScrapePersona: (username: string) => Promise<boolean>;
 }
 
 export const PersonaSidebar = ({ 
   isOpen, 
   onClose, 
   personas, 
-  onPersonaAdd, 
-  onPersonaDelete 
+  onAddPersona,
+  onDeletePersona,
+  onScrapePersona,
 }: PersonaSidebarProps) => {
   const [newPersona, setNewPersona] = useState({
     name: '',
     description: '',
     avatar: '👤'
   });
+  const [instagramUsername, setInstagramUsername] = useState("");
+  const [isScraping, setIsScraping] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newPersona.name.trim() && newPersona.description.trim()) {
-      onPersonaAdd(newPersona);
+      onAddPersona(newPersona);
       setNewPersona({ name: '', description: '', avatar: '👤' });
+    }
+  };
+
+  const handleScrapeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!instagramUsername.trim()) return;
+    
+    setIsScraping(true);
+    const success = await onScrapePersona(instagramUsername);
+    setIsScraping(false);
+
+    if (success) {
+      setInstagramUsername("");
+      onClose(); // Close sidebar on success to see the new persona
+    } else {
+      // Optionally: show an error message to the user
     }
   };
 
@@ -59,13 +79,44 @@ export const PersonaSidebar = ({
             </Button>
           </div>
 
+          {/* Add from Instagram */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center">
+                <Instagram className="h-5 w-5 mr-2" /> Add from Instagram
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleScrapeSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="instagram-username">Instagram Username</Label>
+                  <Input
+                    id="instagram-username"
+                    value={instagramUsername}
+                    onChange={(e) => setInstagramUsername(e.target.value)}
+                    placeholder="e.g., natgeo"
+                    disabled={isScraping}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isScraping}>
+                  {isScraping ? "Scraping..." : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Persona
+                    </>
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
           {/* Add New Persona Form */}
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-lg">Add New Persona</CardTitle>
+              <CardTitle className="text-lg">Add Manually</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleManualSubmit} className="space-y-4">
                 <div>
                   <Label htmlFor="avatar">Avatar (Emoji)</Label>
                   <Input
@@ -109,13 +160,17 @@ export const PersonaSidebar = ({
 
           {/* Existing Personas */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Your Personas</h3>
+            <h3 className="text-lg font-semibold mb-4">Your Custom Personas</h3>
             <div className="space-y-3">
               {personas.map((persona) => (
-                <Card key={persona.id} className="relative">
+                <Card key={persona.id} className="relative group">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      <span className="text-2xl">{persona.avatar}</span>
+                      {persona.avatar.startsWith("http") ? (
+                        <img src={persona.avatar} alt={persona.name} className="h-10 w-10 rounded-full" />
+                      ) : (
+                        <span className="text-2xl h-10 w-10 flex items-center justify-center bg-gray-100 rounded-full">{persona.avatar}</span>
+                      )}
                       <div className="flex-1">
                         <h4 className="font-medium">{persona.name}</h4>
                         <p className="text-sm text-gray-600 mt-1">{persona.description}</p>
@@ -123,8 +178,8 @@ export const PersonaSidebar = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => onPersonaDelete(persona.id)}
-                        className="h-8 w-8 text-red-500 hover:text-red-700"
+                        onClick={() => onDeletePersona(persona.id)}
+                        className="absolute top-2 right-2 h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-100 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="h-4 w-4" />
                       </Button>

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowRight, Users, MessageSquare, TrendingUp, Settings } from "lucide-react";
+import { ArrowRight, Users, MessageSquare, TrendingUp, Settings, Instagram } from "lucide-react";
 import { PersonaSidebar } from "@/components/PersonaSidebar";
 
 interface Persona {
@@ -63,9 +63,40 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [customPersonas, setCustomPersonas] = useState<Persona[]>([]);
+  const [instagramUsername, setInstagramUsername] = useState("");
+  const [isScraping, setIsScraping] = useState(false);
 
   // Combine default and custom personas
   const allPersonas = [...defaultPersonas, ...customPersonas];
+
+  const scrapeAndAddPersona = async (username: string) => {
+    if (!username.trim()) return false;
+    try {
+      const response = await fetch(
+        `http://localhost:5000/scrape/${username}`,
+      );
+      if (!response.ok) {
+        // You might want to throw an error with more info here
+        throw new Error("Failed to scrape profile.");
+      }
+      const data = await response.json();
+      const newPersona: Persona = {
+        id: `instagram-${data.username}`,
+        name: data.full_name || data.username,
+        description: data.persona_description || "No description available.",
+        avatar: data.profile_pic_url,
+      };
+      // Avoid adding duplicate personas
+      if (!allPersonas.find((p) => p.id === newPersona.id)) {
+        setCustomPersonas((prev) => [...prev, newPersona]);
+      }
+      return true;
+    } catch (error) {
+      console.error("Scraping error:", error);
+      // Here you could add a toast notification to inform the user
+      return false;
+    }
+  };
 
   const handlePersonaSelection = (personaId: string) => {
     setSelectedPersonas(prev => 
@@ -81,6 +112,14 @@ const Index = () => {
       id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     };
     setCustomPersonas(prev => [...prev, persona]);
+  };
+
+  const handleScrapeInstagram = async () => {
+    if (!instagramUsername.trim()) return;
+    setIsScraping(true);
+    await scrapeAndAddPersona(instagramUsername);
+    setIsScraping(false);
+    setInstagramUsername("");
   };
 
   const handlePersonaDelete = (id: string) => {
@@ -349,8 +388,9 @@ const Index = () => {
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           personas={customPersonas}
-          onPersonaAdd={handlePersonaAdd}
-          onPersonaDelete={handlePersonaDelete}
+          onAddPersona={handlePersonaAdd}
+          onDeletePersona={handlePersonaDelete}
+          onScrapePersona={scrapeAndAddPersona}
         />
       </>
     );
