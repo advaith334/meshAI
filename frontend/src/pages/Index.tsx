@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,8 @@ import {
   MessageSquare,
   TrendingUp,
   Settings,
+  Sparkles,
+  ArrowLeft,
 } from "lucide-react";
 import { PersonaSidebar } from "@/components/PersonaSidebar";
 import { apiClient, PersonaReaction as ApiPersonaReaction } from "@/lib/api";
@@ -20,39 +22,6 @@ interface Persona {
   description: string;
   avatar: string;
 }
-
-const defaultPersonas: Persona[] = [
-  {
-    id: "tech-enthusiast",
-    name: "Tech Enthusiast",
-    description: "Always excited about the latest innovations and gadgets",
-    avatar: "🤖"
-  },
-  {
-    id: "price-sensitive",
-    name: "Price-Sensitive Shopper",
-    description: "Focused on value and getting the best deals",
-    avatar: "💰"
-  },
-  {
-    id: "eco-conscious",
-    name: "Eco-Conscious Consumer",
-    description: "Prioritizes sustainability and environmental impact",
-    avatar: "🌱"
-  },
-  {
-    id: "early-adopter",
-    name: "Early Adopter",
-    description: "First to try new products and trends",
-    avatar: "🚀"
-  },
-  {
-    id: "skeptical-buyer",
-    name: "Skeptical Buyer",
-    description: "Cautious and requires convincing before making decisions",
-    avatar: "🤔"
-  }
-];
 
 interface PersonaReaction {
   name: string;
@@ -70,9 +39,33 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [customPersonas, setCustomPersonas] = useState<Persona[]>([]);
+  const [availablePersonas, setAvailablePersonas] = useState<Persona[]>([]);
+  const [isLoadingPersonas, setIsLoadingPersonas] = useState(true);
 
-  // Combine default and custom personas
-  const allPersonas = [...defaultPersonas, ...customPersonas];
+  // Load personas from API when component mounts
+  useEffect(() => {
+    const loadPersonas = async () => {
+      try {
+        const response = await apiClient.getPersonas();
+        if (response.error) {
+          console.error('Failed to load personas:', response.error);
+          setAvailablePersonas([]);
+        } else if (response.data) {
+          setAvailablePersonas(response.data);
+        }
+      } catch (error) {
+        console.error('Network error loading personas:', error);
+        setAvailablePersonas([]);
+      } finally {
+        setIsLoadingPersonas(false);
+      }
+    };
+
+    loadPersonas();
+  }, []);
+
+  // Combine API and custom personas
+  const allPersonas = [...availablePersonas, ...customPersonas];
 
   const handlePersonaSelection = (personaId: string) => {
     setSelectedPersonas(prev => 
@@ -96,37 +89,34 @@ const Index = () => {
   };
 
   const generateMockReactions = (selectedIds: string[]): PersonaReaction[] => {
-    const reactions = {
-      "tech-enthusiast": {
-        sentiment: "positive",
-        reaction: "This is fascinating! I love exploring new technological possibilities."
-      },
-      "price-sensitive": {
-        sentiment: "neutral", 
-        reaction: "Interesting, but I'd need to see the cost-benefit analysis first."
-      },
-      "eco-conscious": {
-        sentiment: "positive",
-        reaction: "I appreciate the focus on sustainable solutions."
-      },
-      "early-adopter": {
-        sentiment: "positive",
-        reaction: "Count me in! I'm always ready to try something new."
-      },
-      "skeptical-buyer": {
-        sentiment: "negative",
-        reaction: "I have some concerns about this approach. Need more proof."
-      }
-    };
-
     return selectedIds.map(id => {
       const persona = allPersonas.find(p => p.id === id)!;
-      const defaultReaction = reactions[id as keyof typeof reactions];
+      
+      // Generate reactions based on persona name/description
+      let sentiment = "neutral";
+      let reaction = "This is an interesting perspective to consider.";
+      
+      if (persona.name.toLowerCase().includes("tech") || persona.name.toLowerCase().includes("enthusiast")) {
+        sentiment = "positive";
+        reaction = "This is fascinating! I love exploring new technological possibilities.";
+      } else if (persona.name.toLowerCase().includes("price") || persona.name.toLowerCase().includes("sensitive")) {
+        sentiment = "neutral";
+        reaction = "Interesting, but I'd need to see the cost-benefit analysis first.";
+      } else if (persona.name.toLowerCase().includes("eco") || persona.name.toLowerCase().includes("conscious")) {
+        sentiment = "positive";
+        reaction = "I appreciate the focus on sustainable solutions.";
+      } else if (persona.name.toLowerCase().includes("early") || persona.name.toLowerCase().includes("adopter")) {
+        sentiment = "positive";
+        reaction = "Count me in! I'm always ready to try something new.";
+      } else if (persona.name.toLowerCase().includes("skeptical") || persona.name.toLowerCase().includes("buyer")) {
+        sentiment = "negative";
+        reaction = "I have some concerns about this approach. Need more proof.";
+      }
       
       return {
         name: persona.name,
-        sentiment: defaultReaction?.sentiment || "neutral",
-        reaction: defaultReaction?.reaction || "This is an interesting perspective to consider.",
+        sentiment,
+        reaction,
         avatar: persona.avatar
       };
     });
@@ -340,8 +330,14 @@ const Index = () => {
                 
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Select Personas</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {allPersonas.map((persona) => (
+                  {isLoadingPersonas ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                      <p className="text-gray-500">Loading personas...</p>
+                    </div>
+                  ) : (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {allPersonas.map((persona) => (
                       <div key={persona.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
                         <Checkbox
                           checked={selectedPersonas.includes(persona.id)}
@@ -359,7 +355,8 @@ const Index = () => {
                         </div>
                       </div>
                     ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 <Button 

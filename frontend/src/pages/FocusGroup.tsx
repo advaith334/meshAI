@@ -416,8 +416,14 @@ const FocusGroup = () => {
                   <p className="text-gray-600">Choose exactly 5 personas for your focus group.</p>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    {availablePersonas.map((persona) => (
+                  {isLoadingPersonas ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                      <p className="text-gray-500">Loading personas...</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      {availablePersonas.map((persona) => (
                       <div
                         key={persona.id}
                         onClick={() => togglePersonaSelection(persona)}
@@ -436,10 +442,13 @@ const FocusGroup = () => {
                         </div>
                       </div>
                     ))}
-                  </div>
-                  <p className="text-sm text-gray-600 mt-4">
-                    Selected: {sessionData.personas.length}/5
-                  </p>
+                    </div>
+                  )}
+                  {!isLoadingPersonas && (
+                    <p className="text-sm text-gray-600 mt-4">
+                      Selected: {sessionData.personas.length}/5
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>

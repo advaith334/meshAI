@@ -1,140 +1,137 @@
 import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from flask_socketio import SocketIO
 from dotenv import load_dotenv
-from crew_manager import CrewManager
+
+# Import our core modules
+from config import config, Config
+from core.container import setup_container
+from core.logging import setup_logging
+from core.exceptions import MeshAIException
+from models import db
+
+# Import API blueprints
+from api.personas import personas_bp
+from api.conversations import conversations_bp
+# from api.focus_groups import focus_groups_bp
 
 load_dotenv()
 
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
-
-# Initialize CrewManager
-gemini_api_key = os.getenv("GEMINI_API_KEY")
-if not gemini_api_key:
-    raise ValueError("GEMINI_API_KEY environment variable is required")
-
-crew_manager = CrewManager(gemini_api_key)
-
-@app.route("/")
-def index():
-    return jsonify({"message": "MeshAI CrewAI Backend", "status": "running"})
-
-@app.route("/api/personas", methods=["GET"])
-def get_personas():
-    """Get available personas"""
+def create_app(config_name=None):
+    """Application factory pattern"""
+    
+    # Determine config
+    config_name = config_name or os.environ.get('FLASK_ENV', 'development')
+    app_config = config.get(config_name, config['default'])
+    
+    # Validate configuration
     try:
-        personas = crew_manager.get_available_personas()
-        return jsonify(personas)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/api/simple-interaction", methods=["POST"])
-def simple_interaction():
-    """Handle simple Q&A interaction with selected personas"""
-    try:
-        data = request.json
-        question = data.get("question", "")
-        selected_personas = data.get("personas", [])
-        
-        if not question or not selected_personas:
-            return jsonify({"error": "Question and personas are required"}), 400
-        
-        reactions = crew_manager.run_simple_interaction(question, selected_personas)
-        
-        return jsonify({
-            "question": question,
-            "reactions": reactions,
-            "timestamp": crew_manager._get_timestamp()
-        })
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/api/group-discussion", methods=["POST"])
-def group_discussion():
-    """Handle group discussion between personas"""
-    try:
-        data = request.json
-        question = data.get("question", "")
-        selected_personas = data.get("personas", [])
-        initial_reactions = data.get("initial_reactions", [])
-        
-        if not question or not selected_personas:
-            return jsonify({"error": "Question and personas are required"}), 400
-        
-        discussion_messages = crew_manager.run_group_discussion(
-            question, selected_personas, initial_reactions
-        )
-        
-        return jsonify({
-            "question": question,
-            "discussion_messages": discussion_messages,
-            "timestamp": crew_manager._get_timestamp()
-        })
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/api/focus-group", methods=["POST"])
-def focus_group_simulation():
-    """Handle focus group simulation"""
-    try:
-        data = request.json
-        campaign_description = data.get("campaign_description", "")
-        selected_personas = data.get("personas", [])
-        session_goals = data.get("goals", [])
-        
-        if not campaign_description or not selected_personas:
-            return jsonify({"error": "Campaign description and personas are required"}), 400
-        
-        result = crew_manager.run_focus_group_simulation(
-            campaign_description, selected_personas, session_goals
-        )
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/api/custom-persona", methods=["POST"])
-def create_custom_persona():
-    """Create a custom persona"""
-    try:
-        data = request.json
-        
-        # Extract persona details
-        persona_data = {
-            "id": f"custom-{crew_manager._generate_uuid()}",
-            "name": data.get("name", ""),
-            "role": data.get("role", ""),
-            "industry": data.get("industry", ""),
-            "backstory": data.get("description", ""),
-            "avatar": data.get("avatar", "👤"),
-            "attributes": data.get("customAttributes", {}),
-            "motivations": data.get("motivations", []),
-            "traits": data.get("behavioralTraits", [])
+        app_config.validate_config()
+    except ValueError as e:
+        print(f"Configuration error: {e}")
+        print("Please check your environment variables.")
+        exit(1)
+    
+    # Create Flask app
+    app = Flask(__name__)
+    app.config.from_object(app_config)
+    
+    # Setup logging
+    setup_logging(app_config)
+    
+    # Setup dependency injection container
+    container = setup_container(app_config)
+    
+    # Initialize extensions
+    db.init_app(app)
+    
+    # Setup CORS
+    CORS(app, resources={
+        r"/*": {
+            "origins": app_config.CORS_ORIGINS,
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"]
         }
-        
-        return jsonify({
-            "success": True,
-            "persona": persona_data,
-            "message": "Custom persona created successfully"
-        })
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/api/health", methods=["GET"])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        "status": "healthy",
-        "timestamp": crew_manager._get_timestamp(),
-        "gemini_configured": bool(gemini_api_key),
-        "agents_loaded": len(crew_manager.agents_config),
-        "tasks_loaded": len(crew_manager.tasks_config)
     })
+    
+    # Setup SocketIO for real-time features
+    socketio = SocketIO(app, cors_allowed_origins=app_config.CORS_ORIGINS)
+    
+    # Register error handlers
+    register_error_handlers(app)
+    
+    # Register blueprints
+    register_blueprints(app)
+    
+    # Create database tables
+    with app.app_context():
+        db.create_all()
+        
+        # Create default personas if they don't exist
+        from services.persona_service import PersonaService
+        persona_service = PersonaService()
+        persona_service.create_default_personas()
+    
+    return app, socketio
+
+def register_error_handlers(app):
+    """Register error handlers"""
+    
+    @app.errorhandler(MeshAIException)
+    def handle_meshai_exception(error):
+        """Handle custom MeshAI exceptions"""
+        return jsonify(error.to_dict()), 400
+    
+    @app.errorhandler(404)
+    def handle_not_found(error):
+        """Handle 404 errors"""
+        return jsonify({
+            'error': True,
+            'message': 'Resource not found',
+            'code': 'NOT_FOUND'
+        }), 404
+    
+    @app.errorhandler(500)
+    def handle_internal_error(error):
+        """Handle 500 errors"""
+        return jsonify({
+            'error': True,
+            'message': 'Internal server error',
+            'code': 'INTERNAL_ERROR'
+        }), 500
+
+def register_blueprints(app):
+    """Register API blueprints"""
+    
+    # Health check endpoint
+    @app.route("/")
+    def index():
+        return jsonify({
+            'status': 'healthy',
+            'message': 'MeshAI Backend API',
+            'version': '1.0.0'
+        })
+    
+    @app.route("/health")
+    def health_check():
+        from datetime import datetime
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'timestamp': datetime.now().isoformat()
+        })
+    
+    # Register API blueprints
+    app.register_blueprint(personas_bp, url_prefix='/api/personas')
+    app.register_blueprint(conversations_bp, url_prefix='/api')
+    
+    # Register API blueprints when they're created
+    # app.register_blueprint(focus_groups_bp, url_prefix='/api/focus-groups')
+
+# Create the application
+app, socketio = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    # Run with SocketIO support
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
