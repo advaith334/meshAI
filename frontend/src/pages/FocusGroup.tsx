@@ -506,7 +506,7 @@ const FocusGroup = () => {
                   <div>
                     <h4 className="font-medium mb-2">Logistics</h4>
                     <p className="text-sm text-gray-600">
-                      {sessionData.personas.length === 5 ? 'Ready to start' : 'Incomplete'}
+                      {sessionData.personas.length >= 2 ? 'Ready to start' : 'Incomplete'}
                     </p>
                   </div>
                 </CardContent>
@@ -516,7 +516,7 @@ const FocusGroup = () => {
               <div className="space-y-3">
                 <Button 
                   onClick={startSession}
-                  disabled={!sessionData.name || !sessionData.purpose}
+                  // disabled={!sessionData.name || !sessionData.purpose || sessionData.personas.length < 2}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
                   Generate Focus Group Plan

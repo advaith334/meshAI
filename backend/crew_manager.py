@@ -1,5 +1,6 @@
 import os
 import yaml
+import json
 import logging
 from typing import Dict, List, Any, Optional
 from crewai import Agent, Crew, Task, Process, LLM 
@@ -26,6 +27,35 @@ class CrewManager:
         
         # Cache for created agents
         self._agent_cache = {}
+
+    def _load_personas_from_json(self) -> Dict:
+        """Load personas from JSON files in the personas directory"""
+        personas = {}
+        personas_dir = os.path.join(os.path.dirname(__file__), "personas")
+        
+        if not os.path.exists(personas_dir):
+            print(f"Personas directory not found: {personas_dir}")
+            return personas
+        
+        for filename in os.listdir(personas_dir):
+            if filename.endswith('.json'):
+                filepath = os.path.join(personas_dir, filename)
+                try:
+                    with open(filepath, 'r') as f:
+                        persona_data = json.load(f)
+                        # Use filename without extension as the key
+                        persona_id = filename.replace('.json', '')
+                        personas[persona_id] = {
+                            'role': persona_data.get('name', 'Unknown'),
+                            'goal': f"Provide insights as {persona_data.get('role', 'a participant')}",
+                            'backstory': persona_data.get('description', 'A focus group participant'),
+                            'avatar': persona_data.get('avatar', '👤')
+                        }
+                except Exception as e:
+                    print(f"Error loading persona {filename}: {e}")
+                    continue
+        
+        return personas
     
     def _load_config(self, filepath: str) -> Dict:
         """Load YAML configuration file"""
@@ -40,29 +70,46 @@ class CrewManager:
             print(f"Error parsing YAML file {filepath}: {e}")
             return {}
     
-    def create_agent(self, agent_name: str) -> Optional[Agent]:
-        """Create or retrieve cached agent"""
-        if agent_name in self._agent_cache:
-            return self._agent_cache[agent_name]
+    def create_agent(self, persona_id: str) -> Optional[Agent]:
+        """Create or retrieve cached agent from persona JSON files"""
+        if persona_id in self._agent_cache:
+            return self._agent_cache[persona_id]
         
-        if agent_name not in self.agents_config:
-            print(f"Agent configuration for '{agent_name}' not found")
-            return None
+        # Load personas from JSON if not already loaded
+        if not hasattr(self, '_personas_from_json'):
+            self._personas_from_json = self._load_personas_from_json()
         
-        config = self.agents_config[agent_name]
+        # Try both the original persona_id and the converted version
+        lookup_id = persona_id
+        if persona_id not in self._personas_from_json:
+            # Try converting from underscore to hyphen format
+            alt_id = persona_id.replace('_', '-')
+            if alt_id in self._personas_from_json:
+                lookup_id = alt_id
+            else:
+                # Try converting from hyphen to underscore format
+                alt_id = persona_id.replace('-', '_')
+                if alt_id in self._personas_from_json:
+                    lookup_id = alt_id
+                else:
+                    print(f"Persona configuration for '{persona_id}' not found in JSON files")
+                    print(f"Available personas: {list(self._personas_from_json.keys())}")
+                    return None
         
-        # Use the centralized LLM instance instead of config LLM
+        config = self._personas_from_json[lookup_id]
+        
+        # Create agent from persona data
         agent = Agent(
             role=config['role'],
             goal=config['goal'],
             backstory=config['backstory'],
-            llm=self.llm,  # Always use the same Gemini LLM instance
+            llm=self.llm,
             verbose=False,
             allow_delegation=False,
             memory=True
         )
         
-        self._agent_cache[agent_name] = agent
+        self._agent_cache[persona_id] = agent
         return agent
     
     def create_task(self, task_type: str, agent: Agent, **kwargs) -> Optional[Task]:
@@ -119,12 +166,17 @@ class CrewManager:
                 logger.info(f"CrewAI Response for {persona_id}: {response_text}")
                 sentiment, score = self._analyze_sentiment(response_text)
                 
-                # Get persona info from agents config
-                persona_config = self.agents_config[agent_name]
+                # Get persona info from JSON data instead of agents_config
+                if hasattr(self, '_personas_from_json') and persona_id in self._personas_from_json:
+                    persona_name = self._personas_from_json[persona_id]['role']
+                else:
+                    # Fallback to agents_config
+                    persona_config = self.agents_config.get(agent_name, {})
+                    persona_name = persona_config.get('role', 'Unknown Role')
                 
                 reactions.append({
                     "persona_id": persona_id,
-                    "name": persona_config['role'],
+                    "name": persona_name,
                     "avatar": self._get_avatar_for_persona(persona_id),
                     "reaction": response_text,
                     "sentiment": sentiment,
@@ -134,10 +186,15 @@ class CrewManager:
             except Exception as e:
                 print(f"Error with persona {persona_id}: {e}")
                 # Fallback response
-                persona_config = self.agents_config.get(agent_name, {})
+                if hasattr(self, '_personas_from_json') and persona_id in self._personas_from_json:
+                    persona_name = self._personas_from_json[persona_id]['role']
+                else:
+                    persona_config = self.agents_config.get(agent_name, {})
+                    persona_name = persona_config.get('role', 'Unknown Role')
+                
                 reactions.append({
                     "persona_id": persona_id,
-                    "name": persona_config.get('role', 'Unknown Role'),
+                    "name": persona_name,
                     "avatar": self._get_avatar_for_persona(persona_id),
                     "reaction": f"{e}",
                     "sentiment": "neutral",
@@ -186,12 +243,18 @@ class CrewManager:
                 logger.info(f"CrewAI Group Discussion Response for {persona_id}: {response_text}")
                 sentiment, score = self._analyze_sentiment(response_text)
                 
-                persona_config = self.agents_config[agent_name]
+                # Get persona info from JSON data instead of agents_config
+                if hasattr(self, '_personas_from_json') and persona_id in self._personas_from_json:
+                    persona_name = self._personas_from_json[persona_id]['role']
+                else:
+                    # Fallback to agents_config
+                    persona_config = self.agents_config.get(agent_name, {})
+                    persona_name = persona_config.get('role', 'Unknown Role')
                 
                 discussion_messages.append({
                     "id": str(uuid.uuid4()),
                     "persona_id": persona_id,
-                    "persona_name": persona_config['role'],
+                    "persona_name": persona_name,
                     "avatar": self._get_avatar_for_persona(persona_id),
                     "content": response_text,
                     "sentiment": sentiment,
@@ -213,12 +276,13 @@ class CrewManager:
         agents_data = []
         
         for persona_id in selected_personas:
-            agent_name = persona_id.replace('-', '_')
-            agent = self.create_agent(agent_name)
+            agent = self.create_agent(persona_id)
             
             if not agent:
                 continue
             
+            # Convert persona_id to agent_name format for config lookup
+            agent_name = persona_id.replace('-', '_')
             agents_data.append((persona_id, agent, agent_name))
             
             task = self.create_task(
@@ -245,11 +309,17 @@ class CrewManager:
                 logger.info(f"CrewAI Focus Group Initial Reaction for {persona_id}: {response_text}")
                 sentiment, score = self._analyze_sentiment(response_text)
                 
-                persona_config = self.agents_config[agent_name]
+                # Get persona info from JSON data instead of agents_config
+                if hasattr(self, '_personas_from_json') and persona_id in self._personas_from_json:
+                    persona_name = self._personas_from_json[persona_id]['role']
+                else:
+                    # Fallback to agents_config
+                    persona_config = self.agents_config.get(agent_name, {})
+                    persona_name = persona_config.get('role', 'Unknown Role')
                 
                 initial_reactions.append({
                     "persona_id": persona_id,
-                    "persona_name": persona_config['role'],
+                    "persona_name": persona_name,
                     "avatar": self._get_avatar_for_persona(persona_id),
                     "reaction": response_text,
                     "sentiment": sentiment,
@@ -298,12 +368,18 @@ class CrewManager:
                     logger.info(f"CrewAI Focus Group Round {round_num} Response for {persona_id}: {response_text}")
                     sentiment, score = self._analyze_sentiment(response_text)
                     
-                    persona_config = self.agents_config[agent_name]
+                    # Get persona info from JSON data instead of agents_config
+                    if hasattr(self, '_personas_from_json') and persona_id in self._personas_from_json:
+                        persona_name = self._personas_from_json[persona_id]['role']
+                    else:
+                        # Fallback to agents_config
+                        persona_config = self.agents_config.get(agent_name, {})
+                        persona_name = persona_config.get('role', 'Unknown Role')
                     
                     message = {
                         "id": str(uuid.uuid4()),
                         "persona_id": persona_id,
-                        "persona_name": persona_config['role'],
+                        "persona_name": persona_name,
                         "avatar": self._get_avatar_for_persona(persona_id),
                         "content": response_text,
                         "sentiment": sentiment,
@@ -330,6 +406,7 @@ class CrewManager:
         # Phase 3: Final Summary
         if agents_data:
             summary_agent = agents_data[0][1]  # Use first agent as summarizer
+            summary_agent_name = agents_data[0][2]  # Get the agent_name for the summary task
             
             # Create full context
             full_context = f"Initial Reactions:\n"
@@ -345,7 +422,7 @@ class CrewManager:
                 summary_agent,
                 topic=campaign_description,
                 full_discussion_context=full_context,
-                agent_name=agents_data[0][2]
+                agent_name=summary_agent_name
             )
             
             if summary_task:
@@ -410,20 +487,27 @@ class CrewManager:
         return sentiment, score
     
     def _get_avatar_for_persona(self, persona_id: str) -> str:
-        """Get avatar emoji for persona"""
-        avatar_map = {
-            "tech-enthusiast": "🤖",
-            "price-sensitive": "💰",
-            "eco-conscious": "🌱",
-            "early-adopter": "🚀",
-            "skeptical-buyer": "🤔",
-            "marketing-manager": "👩‍💼",
-            "software-engineer": "👨‍💻",
-            "product-manager": "👩‍🔬",
-            "sales-executive": "👨‍💼",
-            "data-analyst": "👩‍🎓"
-        }
-        return avatar_map.get(persona_id, "👤")
+        """Get avatar emoji for persona from JSON data"""
+        if not hasattr(self, '_personas_from_json'):
+            self._personas_from_json = self._load_personas_from_json()
+        
+        # Try both the original persona_id and the converted version
+        lookup_id = persona_id
+        if persona_id not in self._personas_from_json:
+            # Try converting from underscore to hyphen format
+            alt_id = persona_id.replace('_', '-')
+            if alt_id in self._personas_from_json:
+                lookup_id = alt_id
+            else:
+                # Try converting from hyphen to underscore format
+                alt_id = persona_id.replace('-', '_')
+                if alt_id in self._personas_from_json:
+                    lookup_id = alt_id
+                else:
+                    # Fallback to default avatar
+                    return "👤"
+        
+        return self._personas_from_json[lookup_id]['avatar']
     
     def get_available_personas(self) -> List[Dict]:
         """Get list of available personas"""
