@@ -1,4 +1,4 @@
-# MeshAI - an simulation of AI Agent Communigyt
+# MeshAI - an simulation of AI Agent Community
 
 An innovative platform that transforms traditional market research. Demo use case focuses on AI-powered focus groups, enabling businesses to gather authentic insights from AI agents with customized personas that simulate real customer behaviors and perspectives.
 
