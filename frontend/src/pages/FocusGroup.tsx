@@ -119,12 +119,13 @@ const FocusGroup = () => {
           // Transform API personas to include focus group display properties
           const transformedPersonas: Persona[] = response.data.map((persona, index) => ({
             ...persona,
+            traits: [], // Backend doesn't provide traits, so use empty array
             role: persona.description,
             sentiment: (["positive", "neutral", "negative"][index % 3]) as "positive" | "neutral" | "negative",
             npsScore: Math.floor(Math.random() * 6) + 4, // 4-9
             csatScore: Math.random() * 2 + 3, // 3-5
-            keyPoints: persona.traits.slice(0, 3),
-            questions: [`What about ${persona.traits[0]}?`, `How does this affect ${persona.traits[1] || 'outcomes'}?`]
+            keyPoints: ["Key insight 1", "Key insight 2", "Key insight 3"], // Default key points since traits are empty
+            questions: [`What are your thoughts on this?`, `How does this align with your goals?`] // Default questions
           }));
           setAvailablePersonas(transformedPersonas);
         }
