@@ -119,8 +119,8 @@ const FocusGroup = () => {
           // Transform API personas to include focus group display properties
           const transformedPersonas: Persona[] = response.data.map((persona, index) => ({
             ...persona,
-            traits: [], // Backend doesn't provide traits, so use empty array
-            role: persona.description,
+            role: persona.role,
+            description: persona.description,
             sentiment: (["positive", "neutral", "negative"][index % 3]) as "positive" | "neutral" | "negative",
             npsScore: Math.floor(Math.random() * 6) + 4, // 4-9
             csatScore: Math.random() * 2 + 3, // 3-5
