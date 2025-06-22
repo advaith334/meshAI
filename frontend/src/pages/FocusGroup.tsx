@@ -38,9 +38,9 @@ interface Persona {
   name: string;
   avatar: string;
   description: string;
-  traits: string[];
-  // Display properties for focus group
   role?: string;
+  traits?: string[];
+  // Display properties for focus group
   sentiment?: "positive" | "neutral" | "negative";
   npsScore?: number;
   csatScore?: number;
@@ -110,7 +110,7 @@ const FocusGroup = () => {
   useEffect(() => {
     const loadPersonas = async () => {
       try {
-        const response = await apiClient.getPersonas();
+        const response = await apiClient.getDisplayPersonas();
         if (response.error) {
           console.error('Failed to load personas:', response.error);
           // Fallback to empty array if API fails
@@ -119,12 +119,18 @@ const FocusGroup = () => {
           // Transform API personas to include focus group display properties
           const transformedPersonas: Persona[] = response.data.map((persona, index) => ({
             ...persona,
-            role: persona.description,
+            // Use role from persona data, fallback to description
+            role: persona.role || persona.description,
+            // Generate traits if not present
+            traits: persona.traits || [persona.description || 'General'],
             sentiment: (["positive", "neutral", "negative"][index % 3]) as "positive" | "neutral" | "negative",
             npsScore: Math.floor(Math.random() * 6) + 4, // 4-9
             csatScore: Math.random() * 2 + 3, // 3-5
-            keyPoints: persona.traits.slice(0, 3),
-            questions: [`What about ${persona.traits[0]}?`, `How does this affect ${persona.traits[1] || 'outcomes'}?`]
+            keyPoints: persona.traits?.slice(0, 3) || [persona.description || 'General feedback'],
+            questions: [
+              `What about ${persona.traits?.[0] || persona.description || 'this'}?`, 
+              `How does this affect ${persona.traits?.[1] || persona.role || 'outcomes'}?`
+            ]
           }));
           setAvailablePersonas(transformedPersonas);
         }
@@ -234,7 +240,7 @@ const FocusGroup = () => {
   };
 
   const startSession = async () => {
-    if (sessionData.name && sessionData.purpose && sessionData.personas.length === 5) {
+    if (sessionData.name && sessionData.purpose) {
       setSessionData(prev => ({
         ...prev,
         startTime: new Date()
@@ -412,34 +418,50 @@ const FocusGroup = () => {
               {/* Persona Selection */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Select Personas (5 Required)</CardTitle>
-                  <p className="text-gray-600">Choose exactly 5 personas for your focus group.</p>
+                  <CardTitle>Select Personas</CardTitle>
+                  <p className="text-gray-600">Choose personas for your focus group.</p>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    {availablePersonas.map((persona) => (
-                      <div
-                        key={persona.id}
-                        onClick={() => togglePersonaSelection(persona)}
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                          sessionData.personas.some(p => p.id === persona.id)
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{persona.avatar}</span>
-                          <div>
-                            <h3 className="font-medium">{persona.name}</h3>
-                            <p className="text-sm text-gray-600">{persona.role}</p>
-                          </div>
-                        </div>
+                  {isLoadingPersonas ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                        <p className="text-sm text-gray-600">Loading personas...</p>
                       </div>
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-600 mt-4">
-                    Selected: {sessionData.personas.length}/5
-                  </p>
+                    </div>
+                  ) : availablePersonas.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-600 mb-2">No personas available</p>
+                      <p className="text-sm text-gray-500">Add personas to the personas directory</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        {availablePersonas.map((persona) => (
+                          <div
+                            key={persona.id}
+                            onClick={() => togglePersonaSelection(persona)}
+                            className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                              sessionData.personas.some(p => p.id === persona.id)
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl">{persona.avatar}</span>
+                              <div>
+                                <h3 className="font-medium">{persona.name}</h3>
+                                <p className="text-sm text-gray-600">{persona.role}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-4">
+                        Selected: {sessionData.personas.length}
+                      </p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -499,7 +521,7 @@ const FocusGroup = () => {
               <div className="space-y-3">
                 <Button 
                   onClick={startSession}
-                  disabled={!sessionData.name || !sessionData.purpose || sessionData.personas.length !== 5}
+                  disabled={!sessionData.name || !sessionData.purpose}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
                   Generate Focus Group Plan

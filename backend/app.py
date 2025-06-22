@@ -69,6 +69,39 @@ def save_persona():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# Modified route for displaying personas
+@app.route("/display-personas", methods=["GET"])
+def display_personas_api():
+    """Get all personas from the personas directory for display in focus-group"""
+    try:
+        personas_dir = "personas"
+        if not os.path.exists(personas_dir):
+            return jsonify([])
+        
+        personas = []
+        for filename in os.listdir(personas_dir):
+            if filename.endswith('.json'):
+                filepath = os.path.join(personas_dir, filename)
+                try:
+                    with open(filepath, 'r') as f:
+                        persona_data = json.load(f)
+                        # Ensure the persona has an id field (use filename without extension as id)
+                        persona_id = filename.replace('.json', '')
+                        persona_data['id'] = persona_id
+                        
+                        # Ensure required fields exist with defaults
+                        if 'traits' not in persona_data:
+                            persona_data['traits'] = [persona_data.get('description', 'General')]
+                        
+                        personas.append(persona_data)
+                except json.JSONDecodeError:
+                    app.logger.warning(f"Could not parse JSON from {filename}")
+                    continue
+        
+        return jsonify(personas)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/")
 def index():
     return jsonify({"message": "MeshAI CrewAI Backend", "status": "running"})
