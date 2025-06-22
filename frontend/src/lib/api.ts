@@ -154,6 +154,38 @@ class ApiClient {
     });
   }
 
+  async focusGroupStart(campaignDescription: string, personas: string[], goals: string[]): Promise<ApiResponse<{
+    phase: string;
+    messages: GroupDiscussionMessage[];
+    timestamp: string;
+  }>> {
+    return this.request('/api/focus-group-start', {
+      method: 'POST',
+      body: JSON.stringify({
+        campaign_description: campaignDescription,
+        personas,
+        goals
+      }),
+    });
+  }
+
+  async focusGroupRound(campaignDescription: string, personas: string[], roundNumber: number, previousMessages: any[]): Promise<ApiResponse<{
+    phase: string;
+    round_number: number;
+    messages: GroupDiscussionMessage[];
+    timestamp: string;
+  }>> {
+    return this.request('/api/focus-group-round', {
+      method: 'POST',
+      body: JSON.stringify({
+        campaign_description: campaignDescription,
+        personas,
+        round_number: roundNumber,
+        previous_messages: previousMessages
+      }),
+    });
+  }
+
   async createCustomPersona(personaData: CustomPersonaData): Promise<ApiResponse<{ success: boolean; persona: Persona; message: string }>> {
     return this.request('/api/custom-persona', {
       method: 'POST',
