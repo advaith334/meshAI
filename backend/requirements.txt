@@ -8,5 +8,5 @@ pillow
 pydantic
 python-multipart
 PyYAML
-requests
+requests 
 pytest 

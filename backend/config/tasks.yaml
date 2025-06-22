@@ -3,153 +3,121 @@
 
 initial_reaction_task:
   description: >
-    Analyze the given topic or question: {topic}
+    Hey, what's your take on this: {topic}
     
-    Provide your initial reaction from your unique perspective, covering:
-    1. Your immediate impression and gut reaction
-    2. Key points that align with your expertise and priorities
-    3. Any concerns, opportunities, or insights you notice
+    Just give me your honest first reaction - what comes to mind from your perspective?
+    Keep it natural and conversational, like you're chatting with colleagues.
+    Give me just 1-2 sentences max.
     
-    Keep your response authentic to your role and focused (2-3 sentences).
-    Current context: {context}
+    Context: {context}
   expected_output: >
-    A brief, persona-specific reaction that reflects your unique perspective
-    and expertise on the topic
+    A natural, conversational response in 1-2 sentences sharing your immediate thoughts
   agent: {agent_name}
 
 group_discussion_task:
   description: >
-    Participate in a group discussion about: {topic}
+    We're having a discussion about: {topic}
     
-    Other participants have shared these views:
+    Here's what others have said so far:
     {other_reactions}
     
-    Now contribute to the discussion by:
-    1. Responding to what others have said (agree, disagree, or build upon)
-    2. Adding your unique perspective or insights
-    3. Asking relevant questions or raising new points
+    What do you think? Feel free to react to what others said, share your perspective, 
+    ask questions, or agree/disagree. Keep it to 1-2 sentences - just like a natural conversation.
     
-    Stay true to your persona and keep the conversation engaging.
-    Discussion round: {round_number}
+    Round: {round_number}
   expected_output: >
-    A conversational response that engages with others' viewpoints while
-    maintaining your authentic persona perspective
+    A natural conversational response in 1-2 sentences that engages with the discussion
   agent: {agent_name}
 
 focus_group_initial_task:
   description: >
-    Analyze this marketing campaign/concept from your professional perspective:
+    We're doing a focus group about: {campaign_description}
     
-    Campaign/Concept: {campaign_description}
-    Session Goals: {session_goals}
+    Our goals for this session: {session_goals}
     
-    Provide your initial professional assessment covering:
-    1. Immediate impression and overall reaction
-    2. Key strengths and potential weaknesses you identify
-    3. How this aligns with your area of expertise and concerns
-    4. Specific recommendations or considerations from your viewpoint
+    What's your initial reaction? Just talk through your thoughts in 2-3 sentences - 
+    what stands out to you? Any concerns or opportunities you see?
+    What does this mean from your professional angle?
     
-    Be thorough but concise, focusing on actionable insights.
+    Think of this like you're sitting around a table with other professionals
+    sharing your honest opinion. Keep it conversational and concise.
   expected_output: >
-    A structured professional assessment with clear opinions, reasoning,
-    and actionable insights from your expert perspective
+    A conversational response in 2-3 sentences sharing your professional perspective
+    naturally, like speaking in a focus group
   agent: {agent_name}
 
 focus_group_discussion_task:
   description: >
-    Continue the focus group discussion about: {campaign_description}
+    We're continuing our discussion about: {campaign_description}
     
-    Recent discussion points from other participants:
+    Here's what people have been saying recently:
     {recent_context}
     
-    Your role in this round ({round_number}) is to:
-    1. Build on the discussion with your professional insights
-    2. Address or respond to points raised by others
-    3. Introduce new considerations from your expertise area
-    4. Help the group reach deeper insights or identify key issues
+    What are your thoughts on what's been shared? Anything you want to add,
+    question, or build on? Keep it to 1-2 sentences like a natural conversation.
     
-    Maintain your professional perspective while being collaborative.
+    This is round {round_number} - let's keep the conversation flowing naturally.
   expected_output: >
-    A professional contribution that advances the discussion and provides
-    valuable insights from your area of expertise
+    A conversational contribution in 1-2 sentences that builds on the discussion naturally
   agent: {agent_name}
 
 campaign_analysis_task:
   description: >
-    Conduct a comprehensive analysis of this marketing campaign:
+    We need your detailed thoughts on this campaign: {campaign_description}
     
-    Campaign Details: {campaign_description}
-    Target Goals: {analysis_goals}
+    Goals we're looking at: {analysis_goals}
     
-    Provide a detailed analysis covering:
-    1. Strategic positioning and target audience alignment
-    2. Key messaging strengths and potential gaps
-    3. Competitive advantages and challenges
-    4. Implementation considerations and potential risks
-    5. Recommendations for optimization
+    Walk me through what you're thinking - what works, what doesn't?
+    What would you be worried about? What opportunities do you see?
     
-    Base your analysis on your professional expertise and industry knowledge.
+    This needs more detail since it's analysis, so give me 3-4 key points
+    but keep each point conversational like you're explaining to a colleague.
   expected_output: >
-    A comprehensive professional analysis report with strategic insights,
-    actionable recommendations, and clear reasoning
+    A conversational analysis covering 3-4 key points naturally,
+    like explaining your detailed thoughts to a colleague
   agent: {agent_name}
 
 summary_synthesis_task:
   description: >
-    Create an executive summary of the focus group discussion about: {topic}
+    We just finished discussing: {topic}
     
-    Discussion Context:
+    Here's everything that was covered:
     {full_discussion_context}
     
-    Synthesize the key findings into a comprehensive report including:
-    1. Overview of main themes and insights that emerged
-    2. Areas of consensus and disagreement among participants
-    3. Critical concerns and opportunities identified
-    4. Actionable recommendations based on the collective input
-    5. Next steps or areas requiring further investigation
+    Can you help summarize what came out of this conversation?
+    What were the main points? Where did people agree or disagree?
+    What should we take away from this discussion?
     
-    Present findings in a clear, professional format suitable for stakeholders.
+    Give me the key takeaways in 3-4 sentences like you're wrapping up a meeting.
   expected_output: >
-    A structured executive summary report that captures key insights,
-    consensus points, and actionable recommendations for decision-makers
+    A conversational summary in 3-4 sentences that captures the key discussion points
+    and takeaways in a natural, meeting-wrap-up style
   agent: {agent_name}
 
 persona_consultation_task:
   description: >
-    Provide expert consultation on: {consultation_topic}
+    I need your advice on: {consultation_topic}
     
-    Background Context: {background_info}
-    Specific Questions: {specific_questions}
+    Background: {background_info}
+    Specific questions: {specific_questions}
     
-    Draw upon your expertise to provide:
-    1. Professional assessment of the situation
-    2. Key considerations and potential impacts
-    3. Recommended approaches or solutions
-    4. Potential risks or challenges to consider
-    5. Success metrics or evaluation criteria
-    
-    Tailor your response to be actionable and aligned with your professional expertise.
+    What do you think? What would you recommend based on your experience?
+    Keep it to 2-3 sentences - just your honest professional opinion.
   expected_output: >
-    Expert consultation response with professional insights, practical
-    recommendations, and clear rationale based on your area of expertise
+    Conversational advice in 2-3 sentences based on your expertise,
+    shared naturally like giving quick professional advice
   agent: {agent_name}
 
 comparative_analysis_task:
   description: >
-    Compare and contrast multiple options or approaches: {comparison_topic}
+    I'm trying to decide between these options: {comparison_topic}
     
-    Options to analyze: {options_list}
-    Evaluation criteria: {criteria}
+    Options: {options_list}
+    Looking at: {criteria}
     
-    Provide a comparative analysis that includes:
-    1. Strengths and weaknesses of each option
-    2. How each aligns with your professional priorities
-    3. Potential risks and benefits from your perspective
-    4. Your recommendation with supporting rationale
-    5. Implementation considerations for your preferred approach
-    
-    Use your professional judgment to provide objective, insightful analysis.
+    What's your take? Which way would you lean and why?
+    Give me 2-3 sentences with your perspective and reasoning.
   expected_output: >
-    A structured comparative analysis with clear evaluation of options,
-    professional recommendations, and supporting rationale
+    A conversational comparison in 2-3 sentences sharing your perspective
+    and recommendation naturally
   agent: {agent_name} 

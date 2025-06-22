@@ -18,7 +18,7 @@ class CrewManager:
             model="gemini/gemini-2.5-flash",
             google_api_key=gemini_api_key,
             temperature=0.7,
-            max_tokens=1000
+            max_tokens=2000  # Increased for longer, more complete responses
         )
         
         # Load configurations
