@@ -175,8 +175,7 @@ const UserInterface = () => {
   };
 
   const filteredSessions = sessions.filter((session) => {
-    const matchesSearch = session.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         session.client.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = session.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "All" || session.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -323,7 +322,6 @@ const UserInterface = () => {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-3 px-2 font-medium text-gray-600">Session Name</th>
-                      <th className="text-left py-3 px-2 font-medium text-gray-600">Client</th>
                       <th className="text-left py-3 px-2 font-medium text-gray-600">Avatars</th>
                       <th className="text-left py-3 px-2 font-medium text-gray-600">Start Date</th>
                       <th className="text-left py-3 px-2 font-medium text-gray-600">Status</th>
@@ -334,7 +332,6 @@ const UserInterface = () => {
                     {filteredSessions.map((session) => (
                       <tr key={session.id} className="border-b hover:bg-gray-50">
                         <td className="py-4 px-2 font-medium">{session.name}</td>
-                        <td className="py-4 px-2 text-gray-600">{session.client}</td>
                         <td className="py-4 px-2">
                           <div className="flex -space-x-1">
                             {session.avatars.map((avatar, index) => (

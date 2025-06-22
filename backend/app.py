@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -31,6 +32,42 @@ crew_manager = CrewManager(gemini_api_key)
 
 # Test log to confirm logging is working
 app.logger.info("MeshAI Backend started successfully - logging is configured!")
+
+# Saving personas to /backend/personas
+@app.route("/save-persona", methods=["POST"])
+def save_persona():
+    new_persona = request.get_json()
+
+    if not new_persona:
+        return jsonify({"error": "No data provided"}), 400
+
+    # Create personas directory if it doesn't exist
+    personas_dir = "personas"
+    if not os.path.exists(personas_dir):
+        os.makedirs(personas_dir)
+
+    # Generate a unique filename based on persona name
+    persona_name = new_persona.get("name", "unknown")
+    # Sanitize the name for use as a filename
+    safe_name = "".join(c for c in persona_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+    safe_name = safe_name.replace(' ', '_')
+    
+    # Add timestamp to ensure uniqueness
+    import time
+    timestamp = int(time.time())
+    filename = f"{safe_name}_{timestamp}.json"
+    filepath = os.path.join(personas_dir, filename)
+
+    try:
+        with open(filepath, 'w') as f:
+            json.dump(new_persona, f, indent=4)
+        return jsonify({
+            "message": "Persona saved successfully",
+            "filename": filename,
+            "filepath": filepath
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/")
 def index():
@@ -160,6 +197,52 @@ def health_check():
         "agents_loaded": len(crew_manager.agents_config),
         "tasks_loaded": len(crew_manager.tasks_config)
     })
+
+@app.route("/api/saved-personas", methods=["GET"])
+def get_saved_personas():
+    """Get all saved personas from the personas directory"""
+    try:
+        personas_dir = "personas"
+        if not os.path.exists(personas_dir):
+            return jsonify([])
+        
+        personas = []
+        for filename in os.listdir(personas_dir):
+            if filename.endswith('.json'):
+                filepath = os.path.join(personas_dir, filename)
+                try:
+                    with open(filepath, 'r') as f:
+                        persona_data = json.load(f)
+                        # Add filename to the persona data
+                        persona_data['filename'] = filename
+                        personas.append(persona_data)
+                except json.JSONDecodeError:
+                    app.logger.warning(f"Could not parse JSON from {filename}")
+                    continue
+        
+        return jsonify(personas)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/delete-persona/<filename>", methods=["DELETE"])
+def delete_persona(filename):
+    """Delete a specific persona file"""
+    try:
+        personas_dir = "personas"
+        filepath = os.path.join(personas_dir, filename)
+        
+        # Security check: ensure the file is within the personas directory
+        if not os.path.abspath(filepath).startswith(os.path.abspath(personas_dir)):
+            return jsonify({"error": "Invalid file path"}), 400
+        
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            return jsonify({"message": f"Persona {filename} deleted successfully"}), 200
+        else:
+            return jsonify({"error": "Persona file not found"}), 404
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
