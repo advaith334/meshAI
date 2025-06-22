@@ -22,6 +22,7 @@ interface Persona {
   role: string;
   description: string;
   avatar: string;
+  traits?: string[];
 }
 
 interface CustomizePersonaProps {
@@ -45,6 +46,7 @@ export const CustomizePersona = ({
     role: "",
     description: "",
     avatar: "👤",
+    traits: [],
   });
 
   const handleSave = async () => {

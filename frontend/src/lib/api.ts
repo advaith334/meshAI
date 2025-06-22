@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://127.0.0.1:5000';
 
 export interface ApiResponse<T> {
   data?: T;
@@ -10,7 +10,8 @@ export interface Persona {
   name: string;
   avatar: string;
   description: string;
-  traits: string[];
+  role?: string;
+  traits?: string[];
 }
 
 export interface CustomPersonaData {
@@ -90,6 +91,27 @@ class ApiClient {
 
   async getPersonas(): Promise<ApiResponse<Persona[]>> {
     return this.request('/api/personas');
+  }
+
+  async getDisplayPersonas(): Promise<ApiResponse<Persona[]>> {
+    return this.request('/display-personas');
+  }
+
+  async savePersona(personaData: Omit<Persona, 'id'>): Promise<ApiResponse<{ message: string; filename: string; filepath: string }>> {
+    return this.request('/save-persona', {
+      method: 'POST',
+      body: JSON.stringify(personaData),
+    });
+  }
+
+  async getSavedPersonas(): Promise<ApiResponse<Persona[]>> {
+    return this.request('/api/saved-personas');
+  }
+
+  async deletePersona(filename: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request(`/api/delete-persona/${filename}`, {
+      method: 'DELETE',
+    });
   }
 
   async simpleInteraction(question: string, personas: string[]): Promise<ApiResponse<{

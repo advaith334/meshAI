@@ -418,23 +418,6 @@ const UserInterface = () => {
         </div>
       </div>
 
-      {/* Persona Sidebar */}
-      <PersonaSidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        personas={customPersonas}
-        onAddPersona={handlePersonaAdd}
-        onDeletePersona={handlePersonaDelete}
-        onScrapePersona={scrapeAndAddPersona}
-      />
-
-      {/* Customize Persona Modal */}
-      <CustomizePersona
-        isOpen={isCustomizePersonaOpen}
-        onClose={() => setIsCustomizePersonaOpen(false)}
-        onSave={handleDetailedPersonaSave}
-        existingPersonas={detailedPersonas}
-      />
     </>
   );
 };
