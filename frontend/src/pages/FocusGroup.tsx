@@ -230,7 +230,7 @@ const FocusGroup = () => {
           ...prev,
           personas: prev.personas.filter(p => p.id !== persona.id)
         };
-      } else if (prev.personas.length < 5) {
+      } else if (prev.personas.length < 20) {
         return {
           ...prev,
           personas: [...prev.personas, persona]
