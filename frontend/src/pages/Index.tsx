@@ -19,6 +19,7 @@ interface Persona {
   name: string;
   description: string;
   avatar: string;
+  traits?: string[];
 }
 
 const defaultPersonas: Persona[] = [
@@ -26,31 +27,36 @@ const defaultPersonas: Persona[] = [
     id: "tech-enthusiast",
     name: "Tech Enthusiast",
     description: "Always excited about the latest innovations and gadgets",
-    avatar: "🤖"
+    avatar: "🤖",
+    traits: []
   },
   {
     id: "price-sensitive",
     name: "Price-Sensitive Shopper",
     description: "Focused on value and getting the best deals",
-    avatar: "💰"
+    avatar: "💰",
+    traits: []
   },
   {
     id: "eco-conscious",
     name: "Eco-Conscious Consumer",
     description: "Prioritizes sustainability and environmental impact",
-    avatar: "🌱"
+    avatar: "🌱",
+    traits: []
   },
   {
     id: "early-adopter",
     name: "Early Adopter",
     description: "First to try new products and trends",
-    avatar: "🚀"
+    avatar: "🚀",
+    traits: []
   },
   {
     id: "skeptical-buyer",
     name: "Skeptical Buyer",
     description: "Cautious and requires convincing before making decisions",
-    avatar: "🤔"
+    avatar: "🤔",
+    traits: []
   }
 ];
 
@@ -412,13 +418,7 @@ const Index = () => {
           </div>
         </div>
 
-        <PersonaSidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          personas={customPersonas}
-          onAddPersona={handlePersonaAdd}
-          onDeletePersona={handlePersonaDelete}
-        />
+
       </>
     );
   }
