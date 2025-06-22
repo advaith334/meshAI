@@ -216,7 +216,3 @@ To add new personas, edit `config/agents.yaml` and add a new JSON file in `perso
 - [Tailwind CSS](https://tailwindcss.com/)
 
 ---
-
-## License
-
-This project is part of the MeshAI system. Please refer to the repository for licensing information.
