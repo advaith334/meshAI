@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://127.0.0.1:5000';
 
 export interface ApiResponse<T> {
   data?: T;
@@ -128,6 +128,38 @@ class ApiClient {
         campaign_description: campaignDescription,
         personas,
         goals
+      }),
+    });
+  }
+
+  async focusGroupStart(campaignDescription: string, personas: string[], goals: string[]): Promise<ApiResponse<{
+    phase: string;
+    messages: GroupDiscussionMessage[];
+    timestamp: string;
+  }>> {
+    return this.request('/api/focus-group-start', {
+      method: 'POST',
+      body: JSON.stringify({
+        campaign_description: campaignDescription,
+        personas,
+        goals
+      }),
+    });
+  }
+
+  async focusGroupRound(campaignDescription: string, personas: string[], roundNumber: number, previousMessages: any[]): Promise<ApiResponse<{
+    phase: string;
+    round_number: number;
+    messages: GroupDiscussionMessage[];
+    timestamp: string;
+  }>> {
+    return this.request('/api/focus-group-round', {
+      method: 'POST',
+      body: JSON.stringify({
+        campaign_description: campaignDescription,
+        personas,
+        round_number: roundNumber,
+        previous_messages: previousMessages
       }),
     });
   }

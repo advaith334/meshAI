@@ -74,9 +74,13 @@ interface SessionData {
 const FocusGroup = () => {
   const [currentStep, setCurrentStep] = useState<'config' | 'chat' | 'analytics'>('config');
   const [sessionData, setSessionData] = useState<SessionData>({
-    name: '',
-    purpose: '',
-    goals: [],
+    name: 'Dog Vitals Monitoring Tool Focus Group',
+    purpose: 'To gather qualitative insights into consumer perceptions and preferences regarding a vitals monitoring tool for dogs.',
+    goals: [
+      'To identify key drivers of interest and potential barriers to adoption for the vitals monitoring tool.',
+      'To understand consumer reactions to proposed features, branding, and pricing.',
+      'To uncover unmet needs or pain points that the new product could address.'
+    ],
     personas: [],
     messages: [],
     overallNPS: 0,
@@ -88,6 +92,8 @@ const FocusGroup = () => {
   const [newGoal, setNewGoal] = useState('');
   const [availablePersonas, setAvailablePersonas] = useState<Persona[]>([]);
   const [isLoadingPersonas, setIsLoadingPersonas] = useState(true);
+  const [streamingStatus, setStreamingStatus] = useState<string>('');
+  const [currentRound, setCurrentRound] = useState<number>(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Timer effect
@@ -244,21 +250,91 @@ const FocusGroup = () => {
       setIsSessionActive(true);
       
       try {
-        // Use real API for focus group simulation
-        const personaIds = sessionData.personas.map(p => p.id);
-        const response = await apiClient.focusGroupSimulation(
-          sessionData.purpose, 
-          personaIds, 
-          sessionData.goals
+        await runStreamingFocusGroup();
+      } catch (error) {
+        console.error('Focus group network error:', error);
+        // Fallback to mock conversation
+        generateMockConversation();
+      }
+    }
+  };
+
+  const runStreamingFocusGroup = async () => {
+    const personaIds = sessionData.personas.map(p => p.id);
+    let allMessages: Message[] = [];
+    
+    try {
+      // Phase 1: Initial Reactions
+      setStreamingStatus('Collecting initial reactions...');
+      setCurrentRound(0);
+      console.log('🚀 Starting initial reactions...');
+      
+      const initialResponse = await apiClient.focusGroupStart(
+        sessionData.purpose,
+        personaIds,
+        sessionData.goals
+      );
+      
+      if (initialResponse.error) {
+        console.error('Initial reactions error:', initialResponse.error);
+        setStreamingStatus('Error collecting initial reactions');
+        return;
+      }
+      
+      if (initialResponse.data?.messages) {
+        const initialMessages: Message[] = initialResponse.data.messages.map(msg => ({
+          id: msg.id,
+          personaId: msg.persona_id,
+          personaName: msg.persona_name,
+          avatar: msg.avatar,
+          content: msg.content,
+          timestamp: new Date(msg.timestamp),
+          sentiment: msg.sentiment as "positive" | "neutral" | "negative"
+        }));
+        
+        allMessages = [...allMessages, ...initialMessages];
+        
+        // Update UI with initial messages
+        setSessionData(prev => ({
+          ...prev,
+          messages: [...allMessages]
+        }));
+        
+        console.log(`✅ Added ${initialMessages.length} initial reactions`);
+      }
+      
+      // Phase 2: Discussion Rounds (3 rounds)
+      for (let round = 1; round <= 3; round++) {
+        setStreamingStatus(`Running discussion round ${round}...`);
+        setCurrentRound(round);
+        console.log(`🔄 Starting discussion round ${round}...`);
+        
+        // Add a small delay between rounds to make it feel more natural
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        const roundResponse = await apiClient.focusGroupRound(
+          sessionData.purpose,
+          personaIds,
+          round,
+          allMessages.map(msg => ({
+            id: msg.id,
+            persona_id: msg.personaId,
+            persona_name: msg.personaName,
+            content: msg.content,
+            sentiment: msg.sentiment,
+            timestamp: msg.timestamp.toISOString(),
+            round: 0 // Will be updated by backend
+          }))
         );
         
-        if (response.error) {
-          console.error('Focus group API Error:', response.error);
-          // Fallback to mock conversation
-          generateMockConversation();
-        } else if (response.data) {
-          // Convert API response to frontend format
-          const messages: Message[] = response.data.discussion_messages.map(msg => ({
+        if (roundResponse.error) {
+          console.error(`Round ${round} error:`, roundResponse.error);
+          setStreamingStatus(`Error in round ${round}`);
+          continue;
+        }
+        
+        if (roundResponse.data?.messages) {
+          const roundMessages: Message[] = roundResponse.data.messages.map(msg => ({
             id: msg.id,
             personaId: msg.persona_id,
             personaName: msg.persona_name,
@@ -268,19 +344,41 @@ const FocusGroup = () => {
             sentiment: msg.sentiment as "positive" | "neutral" | "negative"
           }));
           
+          allMessages = [...allMessages, ...roundMessages];
+          
+          // Update UI with new messages
           setSessionData(prev => ({
             ...prev,
-            messages,
-            overallNPS: response.data?.final_summary?.overall_sentiment * 2 || 6.4,
-            overallCSAT: (response.data?.final_summary?.overall_sentiment + 5) / 2 || 3.7,
-            avgSentiment: response.data?.final_summary?.overall_sentiment || 0.6
+            messages: [...allMessages]
           }));
+          
+          console.log(`✅ Added ${roundMessages.length} messages from round ${round}`);
         }
-      } catch (error) {
-        console.error('Focus group network error:', error);
-        // Fallback to mock conversation
-        generateMockConversation();
       }
+      
+      // Calculate final metrics
+      setStreamingStatus('Calculating final insights...');
+      const avgSentiment = allMessages.reduce((sum, msg) => {
+        const score = msg.sentiment === 'positive' ? 1 : msg.sentiment === 'negative' ? -1 : 0;
+        return sum + score;
+      }, 0) / allMessages.length;
+      
+      setSessionData(prev => ({
+        ...prev,
+        overallNPS: Math.max(0, Math.min(10, 5 + avgSentiment * 3)),
+        overallCSAT: Math.max(1, Math.min(5, 3 + avgSentiment)),
+        avgSentiment: avgSentiment
+      }));
+      
+      setStreamingStatus('Focus group completed!');
+      setTimeout(() => setStreamingStatus(''), 3000);
+      console.log('🎉 Focus group simulation completed!');
+      
+    } catch (error) {
+      console.error('Streaming focus group error:', error);
+      setStreamingStatus('Error occurred - using mock data');
+      // Fallback to mock conversation
+      generateMockConversation();
     }
   };
 
@@ -624,11 +722,25 @@ const FocusGroup = () => {
             <div className="border-t bg-white p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <span>Session in progress...</span>
-                  <div className="flex items-center gap-1">
-                    <Activity className="h-4 w-4" />
-                    <span>AI personas are discussing</span>
-                  </div>
+                  {streamingStatus ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span className="text-blue-600 font-medium">{streamingStatus}</span>
+                      {currentRound > 0 && (
+                        <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
+                          Round {currentRound}/3
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-4">
+                      <span>Session in progress...</span>
+                      <div className="flex items-center gap-1">
+                        <Activity className="h-4 w-4" />
+                        <span>AI personas are discussing</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <Button onClick={endSession} variant="destructive">
                   End & Analyze
