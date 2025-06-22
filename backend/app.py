@@ -240,12 +240,18 @@ def focus_group_start():
                 app.logger.info(f"Initial Reaction for {persona_id}: {len(response_text)} characters")
                 sentiment, score = crew_manager._analyze_sentiment(response_text)
                 
-                persona_config = crew_manager.agents_config[agent_name]
+                # Get persona info from JSON data instead of agents_config
+                if hasattr(crew_manager, '_personas_from_json') and persona_id in crew_manager._personas_from_json:
+                    persona_name = crew_manager._personas_from_json[persona_id]['role']
+                else:
+                    # Fallback to agents_config
+                    persona_config = crew_manager.agents_config.get(agent_name, {})
+                    persona_name = persona_config.get('role', 'Unknown Role')
                 
                 initial_reactions.append({
                     "id": crew_manager._generate_uuid(),
                     "persona_id": persona_id,
-                    "persona_name": persona_config['role'].strip(),  # Remove newlines
+                    "persona_name": persona_name.strip(),  # Remove newlines
                     "avatar": crew_manager._get_avatar_for_persona(persona_id),
                     "content": response_text.strip(),  # Remove extra whitespace
                     "sentiment": sentiment,
@@ -319,12 +325,18 @@ def focus_group_round():
                 app.logger.info(f"Round {round_number} Response for {persona_id}: {response_text}")
                 sentiment, score = crew_manager._analyze_sentiment(response_text)
                 
-                persona_config = crew_manager.agents_config[agent_name]
+                # Get persona info from JSON data instead of agents_config
+                if hasattr(crew_manager, '_personas_from_json') and persona_id in crew_manager._personas_from_json:
+                    persona_name = crew_manager._personas_from_json[persona_id]['role']
+                else:
+                    # Fallback to agents_config
+                    persona_config = crew_manager.agents_config.get(agent_name, {})
+                    persona_name = persona_config.get('role', 'Unknown Role')
                 
                 round_messages.append({
                     "id": crew_manager._generate_uuid(),
                     "persona_id": persona_id,
-                    "persona_name": persona_config['role'].strip(),  # Remove newlines
+                    "persona_name": persona_name.strip(),  # Remove newlines
                     "avatar": crew_manager._get_avatar_for_persona(persona_id),
                     "content": response_text.strip(),  # Remove extra whitespace
                     "sentiment": sentiment,
