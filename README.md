@@ -177,49 +177,6 @@ The application will be available at:
 - `GET /api/health` - Health check endpoint
 - `GET /` - API status and information
 
-## 📊 Data Structure
-
-### **Session Data Format**
-```json
-{
-  "metadata": {
-    "session_type": "interview|focus-group",
-    "session_name": "Session Name",
-    "timestamp": 1234567890,
-    "created_at": "2024-01-01T12:00:00Z",
-    "duration_seconds": 1800
-  },
-  "session_data": {
-    "session_type": "interview|focus-group",
-    "session_name": "Session Name",
-    "purpose": "Session purpose",
-    "selected_personas": ["persona_id"],
-    "enhanced_personas": [
-      {
-        "id": "persona_id",
-        "name": "Persona Name",
-        "role": "Persona Role",
-        "avatar": "👤",
-        "description": "Persona description"
-      }
-    ],
-    "messages": [
-      {
-        "id": "message_id",
-        "sender": "user|persona",
-        "content": "Message content",
-        "timestamp": "2024-01-01T12:00:00Z",
-        "sentiment": "positive|neutral|negative"
-      }
-    ],
-    "duration": 1800,
-    "insights": ["AI-generated insights"],
-    "start_time": "2024-01-01T12:00:00Z",
-    "end_time": "2024-01-01T12:30:00Z"
-  }
-}
-```
-
 ## 🎯 Use Cases
 
 ### **Product Research**
@@ -268,26 +225,6 @@ cd frontend && npm run build
 # Backend
 cd backend && gunicorn app:app
 ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Support
-
-For support and questions:
-- Check the documentation above
-- Review the API endpoints
-- Examine the code structure
-- Create an issue for bugs or feature requests
 
 ## 🔮 Future Enhancements
 
