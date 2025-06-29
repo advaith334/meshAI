@@ -222,7 +222,7 @@ const Interview = () => {
     }
   };
 
-  const endInterview = () => {
+  const endInterview = async () => {
     setIsInterviewActive(false);
     setInterviewData(prev => ({
       ...prev,
@@ -250,6 +250,37 @@ const Interview = () => {
       insights,
       keyTakeaways
     }));
+
+    // Save session data to backend
+    try {
+      const sessionData = {
+        session_type: "interview" as const,
+        session_name: interviewData.name,
+        purpose: interviewData.purpose,
+        selected_personas: interviewData.selectedPersona ? [interviewData.selectedPersona.id] : [],
+        messages: interviewData.messages.map(msg => ({
+          id: msg.id,
+          sender: msg.sender,
+          content: msg.content,
+          timestamp: msg.timestamp.toISOString(),
+          sentiment: msg.sentiment
+        })),
+        duration: interviewData.duration,
+        insights,
+        key_takeaways: keyTakeaways,
+        start_time: interviewData.startTime?.toISOString(),
+        end_time: new Date().toISOString()
+      };
+
+      const response = await apiClient.saveSession(sessionData);
+      if (response.error) {
+        console.error('Failed to save session:', response.error);
+      } else {
+        console.log('Session saved successfully:', response.data);
+      }
+    } catch (error) {
+      console.error('Error saving session:', error);
+    }
   };
 
   const formatDuration = (seconds: number) => {

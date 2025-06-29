@@ -61,6 +61,49 @@ export interface FocusGroupResult {
   };
 }
 
+export interface SessionData {
+  session_type: "interview" | "focus-group";
+  session_name: string;
+  purpose: string;
+  goals?: string[];
+  selected_personas: string[];
+  messages: any[];
+  duration: number;
+  insights?: string[];
+  key_takeaways?: string[];
+  start_time?: string;
+  end_time?: string;
+  enhanced_personas?: Array<{
+    id: string;
+    name: string;
+    role: string;
+    avatar: string;
+    description: string;
+  }>;
+}
+
+export interface SavedSession {
+  filename: string;
+  metadata: {
+    session_type: string;
+    session_name: string;
+    timestamp: number;
+    created_at: string;
+    duration_seconds: number;
+  };
+  session_data: SessionData;
+}
+
+export interface DashboardSession {
+  id: string;
+  name: string;
+  session_type: "interview" | "focus-group" | "unknown";
+  persona_avatars: string[];
+  start_date: string;
+  duration: number;
+  status: string;
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -201,6 +244,21 @@ class ApiClient {
     tasks_loaded: number;
   }>> {
     return this.request('/api/health');
+  }
+
+  async saveSession(sessionData: SessionData): Promise<ApiResponse<{ message: string; filename: string; filepath: string }>> {
+    return this.request('/api/save-session', {
+      method: 'POST',
+      body: JSON.stringify(sessionData),
+    });
+  }
+
+  async getSessions(): Promise<ApiResponse<SavedSession[]>> {
+    return this.request('/api/get-sessions');
+  }
+
+  async getDashboardSessions(): Promise<ApiResponse<DashboardSession[]>> {
+    return this.request('/api/dashboard-sessions');
   }
 }
 

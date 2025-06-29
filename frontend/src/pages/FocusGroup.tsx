@@ -382,13 +382,57 @@ const FocusGroup = () => {
     }
   };
 
-  const endSession = () => {
+  const endSession = async () => {
     setIsSessionActive(false);
     setSessionData(prev => ({
       ...prev,
       endTime: new Date()
     }));
     setCurrentStep('analytics');
+
+    // Save session data to backend
+    try {
+      const sessionDataToSave = {
+        session_type: "focus-group" as const,
+        session_name: sessionData.name,
+        purpose: sessionData.purpose,
+        goals: sessionData.goals,
+        selected_personas: sessionData.personas.map(p => p.id),
+        messages: sessionData.messages.map(msg => ({
+          id: msg.id,
+          persona_id: msg.personaId,
+          persona_name: msg.personaName,
+          avatar: msg.avatar,
+          content: msg.content,
+          timestamp: msg.timestamp.toISOString(),
+          sentiment: msg.sentiment
+        })),
+        duration: sessionDuration,
+        insights: [
+          "Key insights from the focus group discussion",
+          "Main themes and patterns identified",
+          "Consensus and disagreements among participants",
+          "Actionable recommendations from the group"
+        ],
+        key_takeaways: [
+          "Primary conclusions from the session",
+          "Most important feedback points",
+          "Areas requiring further investigation",
+          "Next steps based on group input"
+        ],
+        start_time: sessionData.startTime?.toISOString(),
+        end_time: new Date().toISOString()
+      };
+
+      const response = await apiClient.saveSession(sessionDataToSave);
+      if (response.error) {
+        console.error('Failed to save session:', response.error);
+      } else {
+        console.log('Session saved successfully:', response.data);
+      }
+    } catch (error) {
+      console.error('Error saving session:', error);
+    }
   };
 
   const formatDuration = (seconds: number) => {
@@ -775,10 +819,18 @@ const FocusGroup = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <Button variant="ghost" onClick={() => setCurrentStep('config')} className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Configuration
-          </Button>
+          <div className="flex items-center justify-between mb-4">
+            <Button variant="ghost" onClick={() => setCurrentStep('config')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Configuration
+            </Button>
+            <Button 
+              onClick={() => window.location.href = '/dashboard'}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Back to Dashboard
+            </Button>
+          </div>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Session Analytics</h1>

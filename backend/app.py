@@ -6,6 +6,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from crew_manager import CrewManager
 from crewai import Crew, Process
+from datetime import datetime
 
 load_dotenv()
 
@@ -443,6 +444,190 @@ def delete_persona(filename):
             return jsonify({"error": "Persona file not found"}), 404
             
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/save-session", methods=["POST"])
+def save_session():
+    """Save session data (interview or focus group) to JSON file"""
+    try:
+        data = request.json
+        
+        # Create prev_prompts directory if it doesn't exist
+        prev_prompts_dir = "prev_prompts"
+        if not os.path.exists(prev_prompts_dir):
+            os.makedirs(prev_prompts_dir)
+        
+        # Generate filename with timestamp
+        import time
+        timestamp = int(time.time())
+        session_type = data.get("session_type", "unknown")
+        session_name = data.get("session_name", "session")
+        
+        # Sanitize session name for filename
+        safe_name = "".join(c for c in session_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        safe_name = safe_name.replace(' ', '_')
+        
+        filename = f"{session_type}_{safe_name}_{timestamp}.json"
+        filepath = os.path.join(prev_prompts_dir, filename)
+        
+        # Enhance persona data with names and avatars
+        enhanced_personas = []
+        if "selected_personas" in data:
+            personas_dir = "personas"
+            if os.path.exists(personas_dir):
+                for persona_id in data["selected_personas"]:
+                    persona_file = f"{persona_id}.json"
+                    persona_path = os.path.join(personas_dir, persona_file)
+                    if os.path.exists(persona_path):
+                        try:
+                            with open(persona_path, 'r') as pf:
+                                persona_data = json.load(pf)
+                                enhanced_personas.append({
+                                    "id": persona_id,
+                                    "name": persona_data.get("name", "Unknown"),
+                                    "role": persona_data.get("role", "Unknown Role"),
+                                    "avatar": persona_data.get("avatar", "👤"),
+                                    "description": persona_data.get("description", "")
+                                })
+                        except:
+                            enhanced_personas.append({
+                                "id": persona_id,
+                                "name": "Unknown",
+                                "role": "Unknown Role",
+                                "avatar": "👤",
+                                "description": ""
+                            })
+                    else:
+                        enhanced_personas.append({
+                            "id": persona_id,
+                            "name": "Unknown",
+                            "role": "Unknown Role",
+                            "avatar": "👤",
+                            "description": ""
+                        })
+        
+        # Add metadata
+        session_data = {
+            "metadata": {
+                "session_type": session_type,
+                "session_name": session_name,
+                "timestamp": timestamp,
+                "created_at": datetime.now().isoformat(),
+                "duration_seconds": data.get("duration", 0)
+            },
+            "session_data": {
+                **data,
+                "enhanced_personas": enhanced_personas
+            }
+        }
+        
+        with open(filepath, 'w') as f:
+            json.dump(session_data, f, indent=4)
+        
+        app.logger.info(f"Session saved: {filepath}")
+        
+        return jsonify({
+            "message": "Session saved successfully",
+            "filename": filename,
+            "filepath": filepath
+        }), 200
+        
+    except Exception as e:
+        app.logger.error(f"Error saving session: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/get-sessions", methods=["GET"])
+def get_sessions():
+    """Get all saved sessions"""
+    try:
+        prev_prompts_dir = "prev_prompts"
+        if not os.path.exists(prev_prompts_dir):
+            return jsonify([])
+        
+        sessions = []
+        for filename in os.listdir(prev_prompts_dir):
+            if filename.endswith('.json'):
+                filepath = os.path.join(prev_prompts_dir, filename)
+                try:
+                    with open(filepath, 'r') as f:
+                        session_data = json.load(f)
+                        sessions.append({
+                            "filename": filename,
+                            "metadata": session_data.get("metadata", {}),
+                            "session_data": session_data.get("session_data", {})
+                        })
+                except json.JSONDecodeError:
+                    app.logger.warning(f"Could not parse JSON from {filename}")
+                    continue
+        
+        # Sort by timestamp (newest first)
+        sessions.sort(key=lambda x: x["metadata"].get("timestamp", 0), reverse=True)
+        
+        return jsonify(sessions)
+        
+    except Exception as e:
+        app.logger.error(f"Error getting sessions: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/dashboard-sessions", methods=["GET"])
+def get_dashboard_sessions():
+    """Get session data for dashboard overview"""
+    try:
+        prev_prompts_dir = "prev_prompts"
+        if not os.path.exists(prev_prompts_dir):
+            return jsonify([])
+        
+        sessions = []
+        for filename in os.listdir(prev_prompts_dir):
+            if filename.endswith('.json'):
+                filepath = os.path.join(prev_prompts_dir, filename)
+                try:
+                    with open(filepath, 'r') as f:
+                        session_data = json.load(f)
+                        metadata = session_data.get("metadata", {})
+                        session_info = session_data.get("session_data", {})
+                        
+                        # Extract persona avatars from enhanced_personas if available
+                        persona_avatars = []
+                        if "enhanced_personas" in session_info:
+                            persona_avatars = [p.get("avatar", "👤") for p in session_info["enhanced_personas"]]
+                        elif "selected_personas" in session_info:
+                            # Fallback to loading from personas directory
+                            personas_dir = "personas"
+                            if os.path.exists(personas_dir):
+                                for persona_id in session_info["selected_personas"]:
+                                    persona_file = f"{persona_id}.json"
+                                    persona_path = os.path.join(personas_dir, persona_file)
+                                    if os.path.exists(persona_path):
+                                        try:
+                                            with open(persona_path, 'r') as pf:
+                                                persona_data = json.load(pf)
+                                                persona_avatars.append(persona_data.get("avatar", "👤"))
+                                        except:
+                                            persona_avatars.append("👤")
+                                    else:
+                                        persona_avatars.append("👤")
+                        
+                        sessions.append({
+                            "id": filename.replace('.json', ''),
+                            "name": metadata.get("session_name", "Unknown Session"),
+                            "session_type": metadata.get("session_type", "unknown"),
+                            "persona_avatars": persona_avatars,
+                            "start_date": metadata.get("created_at", ""),
+                            "duration": metadata.get("duration_seconds", 0),
+                            "status": "Completed"  # All saved sessions are completed
+                        })
+                except json.JSONDecodeError:
+                    app.logger.warning(f"Could not parse JSON from {filename}")
+                    continue
+        
+        # Sort by timestamp (newest first)
+        sessions.sort(key=lambda x: x.get("start_date", ""), reverse=True)
+        
+        return jsonify(sessions)
+        
+    except Exception as e:
+        app.logger.error(f"Error getting dashboard sessions: {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
