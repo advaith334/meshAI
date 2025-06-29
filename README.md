@@ -1,218 +1,302 @@
-# meshAI
+# MeshAI - AI-Powered Interview & Focus Group Platform
 
-MeshAI is a full-stack platform for simulating intelligent AI agent personas for market research, focus groups, and interactive discussions. It leverages a powerful Python backend (CrewAI + Google Gemini API) and a modern React/TypeScript frontend for seamless, multi-modal user experiences.
+MeshAI is a comprehensive platform that enables users to conduct AI-powered interviews and focus groups using persona-based interactions. Built with React, TypeScript, and Python, it leverages Google's Gemini AI to create realistic conversations and generate actionable insights.
 
----
+## 🚀 Features
 
-## Table of Contents
-- [Features](#features)
-- [Architecture](#architecture)
-  - [Backend](#backend)
-  - [Frontend](#frontend)
-- [Setup & Installation](#setup--installation)
-  - [Backend](#backend-setup)
-  - [Frontend](#frontend-setup)
-- [Configuration](#configuration)
-- [API Endpoints](#api-endpoints)
-- [Available Personas](#available-personas)
-- [Development & Contribution](#development--contribution)
-- [Troubleshooting](#troubleshooting)
-- [Support & Resources](#support--resources)
-- [License](#license)
+### **Session Management**
+- **One-on-One Interviews**: Conduct focused interviews with individual personas
+- **Focus Group Discussions**: Facilitate group discussions with multiple personas
+- **Session History**: View, search, and export all previous sessions
+- **Real-time Analytics**: Get instant insights and metrics from your sessions
 
----
+### **AI-Powered Personas**
+- **Pre-built Personas**: 20+ diverse personas including Steve Jobs, Oprah Winfrey, Peter Thiel, and more
+- **Custom Personas**: Create and save your own personas with specific traits and backgrounds
+- **Gemini AI Integration**: All persona responses generated using Google's Gemini 2.5 Flash
+- **Dynamic Conversations**: Real-time, context-aware responses based on conversation flow
 
-## Features
-- **20+ Distinct AI Personas**: Simulate a wide range of market participants, experts, and consumers.
-- **Multi-Modal Interactions**: Simple Q&A, group discussions, and comprehensive focus group simulations.
-- **Sentiment Analysis**: Real-time sentiment tracking and analytics.
-- **Professional Market Research**: NPS, CSAT, and detailed analytics.
-- **YAML-Based Configuration**: Easily add or modify personas and tasks.
-- **RESTful API**: Clean endpoints for frontend integration.
-- **Modern UI**: Responsive, component-driven React/TypeScript frontend with Tailwind CSS.
+### **Advanced Analytics**
+- **AI-Generated Insights**: Gemini AI analyzes conversations to provide actionable insights
+- **Sentiment Analysis**: Track emotional responses and engagement levels
+- **Session Metrics**: Duration, message count, participant engagement
+- **Export Functionality**: Download session transcripts and analytics as JSON
 
----
+### **User Experience**
+- **Modern UI**: Clean, responsive interface built with Tailwind CSS and shadcn/ui
+- **Real-time Chat**: Live conversation interface with typing indicators
+- **Session Recording**: Track session duration and participant interactions
+- **Search & Filter**: Easily find and filter through session history
 
-## Architecture
+## 🏗️ Architecture
 
-### Backend
-- **Framework**: Python 3.10+, Flask, CrewAI, Google Gemini API
-- **Key Files**:
-  - `app.py`: Main Flask app, API endpoints
-  - `crew_manager.py`: Core logic for agent management, task execution, sentiment analysis
-  - `config/agents.yaml`: Persona definitions
-  - `config/tasks.yaml`: Task templates
-  - `personas/`: Individual persona JSON files
-  - `test_backend.py`: Backend tests
+### **Frontend (React + TypeScript)**
+```
+frontend/
+├── src/
+│   ├── components/     # Reusable UI components
+│   ├── pages/         # Main application pages
+│   ├── lib/           # API client and utilities
+│   └── hooks/         # Custom React hooks
+```
 
-### Frontend
-- **Framework**: React, TypeScript, Vite, Tailwind CSS
-- **Key Files**:
-  - `src/pages/`: Main app pages (Dashboard, FocusGroup, UserInterface, etc.)
-  - `src/components/`: UI and persona components
-  - `src/lib/api.ts`: API integration helpers
-  - `src/hooks/`: Custom React hooks
-  - `public/`: Static assets
+### **Backend (Python + Flask)**
+```
+backend/
+├── app.py             # Main Flask application
+├── crew_manager.py    # CrewAI integration for persona management
+├── personas/          # JSON persona definitions
+├── prev_prompts/      # Saved session data
+└── config/           # YAML configuration files
+```
 
----
+## 🛠️ Installation
 
-## Setup & Installation
-
-### Backend Setup
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd meshAI/backend
-   ```
-2. **Create a virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. **Configure environment**
-   - Create a `.env` file in `backend/`:
-     ```env
-     GEMINI_API_KEY=your_gemini_api_key_here
-     FLASK_ENV=development
-     FLASK_DEBUG=True
-     ```
-   - Get your Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
-5. **Run the backend**
-   ```bash
-   python app.py
-   ```
-   The backend will start on `http://localhost:5000`
+### Prerequisites
+- Node.js 18+ and npm
+- Python 3.8+
+- Google Gemini API key
 
 ### Frontend Setup
-1. **Navigate to frontend**
-   ```bash
-   cd ../frontend
-   ```
-2. **Install dependencies**
-   ```bash
-   npm install
-   # or
-   bun install
-   ```
-3. **Run the frontend**
-   ```bash
-   npm run dev
-   # or
-   bun run dev
-   ```
-   The frontend will start on `http://localhost:5173`
-
----
-
-## Configuration
-
-### Personas
-- Defined in `backend/config/agents.yaml` and `backend/personas/`
-- Add or modify personas by editing these files
-
-### Tasks
-- Defined in `backend/config/tasks.yaml`
-- Add or modify task templates for new research scenarios
-
----
-
-## API Endpoints
-
-### Health Check
-```http
-GET /api/health
+```bash
+cd frontend
+npm install
+npm run dev
 ```
-Returns system status and configuration info.
 
-### Get Available Personas
-```http
-GET /api/personas
+### Backend Setup
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
-Returns list of all available AI personas.
 
-### Simple Interaction
-```http
-POST /api/simple-interaction
-Content-Type: application/json
+### Environment Configuration
+Create a `.env` file in the backend directory:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+### Start the Backend
+```bash
+cd backend
+python app.py
+```
+
+The application will be available at:
+- Frontend: http://localhost:5173
+- Backend: http://localhost:5000
+
+## 📖 Usage Guide
+
+### **Starting a New Session**
+
+1. **Navigate to Dashboard**: Access the main dashboard to see all your sessions
+2. **Click "New Session"**: Choose between Interview or Focus Group
+3. **Configure Session**:
+   - Set session name and purpose
+   - Select personas (1 for interview, 2+ for focus group)
+   - Add research goals (focus groups only)
+4. **Start Session**: Begin the AI-powered conversation
+
+### **Conducting Interviews**
+
+- **One-on-One Interaction**: Chat directly with a single persona
+- **Real-time Responses**: Get instant, context-aware responses from Gemini AI
+- **Session Control**: End session when ready to view analytics
+- **AI Insights**: Automatically generated insights based on conversation content
+
+### **Running Focus Groups**
+
+- **Multi-Persona Discussions**: Up to 20 personas can participate
+- **Structured Rounds**: 3 discussion rounds with initial reactions
+- **Group Dynamics**: Personas respond to each other's comments
+- **Comprehensive Analytics**: Detailed breakdown by participant
+
+### **Viewing Analytics**
+
+- **Session Overview**: Duration, participants, message count
+- **AI-Generated Insights**: 8 actionable insights from Gemini AI
+- **Sentiment Analysis**: Positive, neutral, and negative sentiment tracking
+- **Export Options**: Download session data as JSON
+
+### **Session History**
+
+- **Browse All Sessions**: View interviews and focus groups
+- **Search & Filter**: Find sessions by type, date, or content
+- **Export Sessions**: Download complete session data
+- **Participant Details**: See which personas participated in each session
+
+## 🎭 Available Personas
+
+### **Business & Technology**
+- **Steve Jobs**: Design and User Experience Visionary
+- **Peter Thiel**: Technology and Investment Expert
+- **Tim Cook**: Operations and Supply Chain Specialist
+- **Seth Godin**: Marketing and Branding Expert
+
+### **Media & Influence**
+- **Oprah Winfrey**: Media and Communication Expert
+- **Nate Silver**: Data and Analytics Specialist
+- **Seth Godin**: Marketing and Branding Expert
+
+### **Customer Types**
+- **Tech Enthusiast**: Early adopter and technology lover
+- **Budget Conscious Customer**: Price-sensitive consumer
+- **Early Adopter**: Trend-setting consumer
+- **Environmental Sustainability Expert**: Eco-conscious specialist
+
+### **Professional Roles**
+- **Technical Engineering Specialist**: Engineering and technical expert
+- **Jasmine Williams**: Customer Success Manager
+- **Marcus Thompson**: Sales Director
+- **Maya Chen**: Product Manager
+- **Ruby Martinez**: UX Designer
+- **Zoe Kim**: Data Scientist
+
+## 🔧 API Endpoints
+
+### **Session Management**
+- `GET /api/dashboard-sessions` - Get sessions for dashboard
+- `POST /api/save-session` - Save session data
+- `GET /api/get-sessions` - Retrieve all saved sessions
+
+### **Persona Management**
+- `GET /api/personas` - Get available personas
+- `GET /display-personas` - Get personas for display
+- `POST /api/custom-persona` - Create custom persona
+
+### **AI Interactions**
+- `POST /api/simple-interaction` - One-on-one persona interaction
+- `POST /api/focus-group-start` - Start focus group session
+- `POST /api/focus-group-round` - Run focus group discussion round
+- `POST /api/generate-insights` - Generate AI insights from conversation
+
+### **Health & Status**
+- `GET /api/health` - Health check endpoint
+- `GET /` - API status and information
+
+## 📊 Data Structure
+
+### **Session Data Format**
+```json
 {
-  "question": "What do you think about this new product?",
-  "personas": ["tech-enthusiast", "price-sensitive", "eco-conscious"]
+  "metadata": {
+    "session_type": "interview|focus-group",
+    "session_name": "Session Name",
+    "timestamp": 1234567890,
+    "created_at": "2024-01-01T12:00:00Z",
+    "duration_seconds": 1800
+  },
+  "session_data": {
+    "session_type": "interview|focus-group",
+    "session_name": "Session Name",
+    "purpose": "Session purpose",
+    "selected_personas": ["persona_id"],
+    "enhanced_personas": [
+      {
+        "id": "persona_id",
+        "name": "Persona Name",
+        "role": "Persona Role",
+        "avatar": "👤",
+        "description": "Persona description"
+      }
+    ],
+    "messages": [
+      {
+        "id": "message_id",
+        "sender": "user|persona",
+        "content": "Message content",
+        "timestamp": "2024-01-01T12:00:00Z",
+        "sentiment": "positive|neutral|negative"
+      }
+    ],
+    "duration": 1800,
+    "insights": ["AI-generated insights"],
+    "start_time": "2024-01-01T12:00:00Z",
+    "end_time": "2024-01-01T12:30:00Z"
+  }
 }
 ```
 
-### Group Discussion
-```http
-POST /api/group-discussion
-Content-Type: application/json
-{
-  "question": "Should we implement this feature?",
-  "personas": ["software-engineer", "product-manager", "sales-executive"],
-  "initial_reactions": [...]
-}
+## 🎯 Use Cases
+
+### **Product Research**
+- Test product concepts with diverse personas
+- Gather feedback on features and pricing
+- Understand user needs and pain points
+
+### **Market Research**
+- Explore market opportunities
+- Analyze competitive positioning
+- Validate business assumptions
+
+### **User Experience Design**
+- Test interface designs and user flows
+- Gather feedback on usability
+- Identify improvement opportunities
+
+### **Content Development**
+- Test messaging and positioning
+- Validate content strategies
+- Gather insights for marketing campaigns
+
+## 🔒 Security & Privacy
+
+- **Local Storage**: All session data stored locally in `prev_prompts/`
+- **No External Storage**: No data sent to external databases
+- **API Key Security**: Gemini API key stored in environment variables
+- **Session Privacy**: Each session is isolated and private
+
+## 🚀 Deployment
+
+### **Development**
+```bash
+# Frontend
+cd frontend && npm run dev
+
+# Backend
+cd backend && python app.py
 ```
 
-### Focus Group Simulation
-```http
-POST /api/focus-group
-Content-Type: application/json
-{
-  "campaign_description": "A new eco-friendly smartphone with solar charging",
-  "personas": ["tech-enthusiast", "eco-conscious", "price-sensitive", "early-adopter"],
-  "goals": ["Assess market reception", "Identify key concerns", "Evaluate pricing strategy"]
-}
+### **Production**
+```bash
+# Frontend
+cd frontend && npm run build
+
+# Backend
+cd backend && gunicorn app:app
 ```
 
-#### Response Formats
-- See `backend/README.md` for detailed response examples for each endpoint.
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For support and questions:
+- Check the documentation above
+- Review the API endpoints
+- Examine the code structure
+- Create an issue for bugs or feature requests
+
+## 🔮 Future Enhancements
+
+- **Voice Integration**: Add voice-to-text and text-to-speech capabilities
+- **Advanced Analytics**: More detailed sentiment and engagement metrics
+- **Persona Training**: Allow custom training of persona responses
+- **Multi-language Support**: Support for conversations in multiple languages
+- **Integration APIs**: Connect with external tools and platforms
 
 ---
 
-## Available Personas
-
-A sample of available personas (see `backend/personas/` for all):
-
-| Persona File | Description |
-|--------------|-------------|
-| Tech_Enthusiast.json | Technology trends and innovations |
-| BudgetConciousCustomer.json | Cost-benefit analysis and value |
-| Environmental_Sustainability_Expert.json | Environmental impact and sustainability |
-| Early_Adopter_and_Trend_Setter.json | Emerging trends and opportunities |
-| Technical_Engineering_Specialist.json | Technical feasibility and implementation |
-| Marketing Manager | Brand positioning and market strategy |
-| Data Analyst | Data quality and analytical insights |
-| ... | ... |
-
-To add new personas, edit `config/agents.yaml` and add a new JSON file in `personas/`.
-
----
-
-## Development & Contribution
-
-- **Backend**: Add new features in `crew_manager.py`, update Flask endpoints in `app.py`, and expand YAML configs.
-- **Frontend**: Add new pages/components in `src/pages/` and `src/components/`.
-- **Testing**: Use `test_backend.py` for backend tests. Add frontend tests as needed.
-- **Pull Requests**: Please open issues or pull requests for major changes.
-
----
-
-## Troubleshooting
-
-- **API Key Issues**: Ensure your Gemini API key is correct and set in `.env`.
-- **Import Errors**: Use Python 3.10+ and activate your virtual environment.
-- **Configuration Issues**: Check YAML formatting and required fields.
-- **Frontend Issues**: Ensure Node.js, npm, or bun are installed and up to date.
-
----
-
-## Support & Resources
-- [CrewAI Documentation](https://docs.crewai.com/)
-- [Google Gemini API](https://ai.google.dev/)
-- [Flask Documentation](https://flask.palletsprojects.com/)
-- [React Documentation](https://react.dev/)
-- [Tailwind CSS](https://tailwindcss.com/)
-
----
+**MeshAI** - Transforming how you conduct research and gather insights with AI-powered personas.
