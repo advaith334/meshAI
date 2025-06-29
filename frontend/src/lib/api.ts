@@ -260,6 +260,13 @@ class ApiClient {
   async getDashboardSessions(): Promise<ApiResponse<DashboardSession[]>> {
     return this.request('/api/dashboard-sessions');
   }
+
+  async generateInsights(sessionData: SessionData): Promise<ApiResponse<{ insights: string[]; generated_at: string }>> {
+    return this.request('/api/generate-insights', {
+      method: 'POST',
+      body: JSON.stringify({ session_data: sessionData }),
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL); 
