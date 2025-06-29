@@ -146,7 +146,7 @@ const Dashboard = () => {
           {/* Top Action Bar */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <Button
-              onClick={() => navigate("/focus-group")}
+              onClick={() => navigate("/session-selection")}
               className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 text-lg"
             >
               + New Session
