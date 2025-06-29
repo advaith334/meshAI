@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import FocusGroup from "./pages/FocusGroup";
+import Interview from "./pages/Interview";
+import SessionSelection from "./pages/SessionSelection";
+import SessionHistory from "./pages/SessionHistory";
 import NotFound from "./pages/NotFound";
 import LandingPage from "./pages/LandingPage";
 
@@ -21,7 +24,10 @@ const App = () => (
           <Route path="/" element={<LandingPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/personas" element={<Index />} />
+          <Route path="/session-selection" element={<SessionSelection />} />
           <Route path="/focus-group" element={<FocusGroup />} />
+          <Route path="/interview" element={<Interview />} />
+          <Route path="/session-history" element={<SessionHistory />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
